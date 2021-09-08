@@ -1,61 +1,224 @@
 import dash
+import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
+from dash_bootstrap_components import themes
+from dash_bootstrap_components._components.Button import Button
+from dash_bootstrap_components._components.NavItem import NavItem
+from dash_bootstrap_components._components.Row import Row
 import dash_core_components as dcc
 import dash_html_components as html
 import csv
-import pandas
+from dash_html_components.Font import Font
+import pandas as pd
 from pandas_datareader import data as web
 from datetime import datetime as dt
 import plotly.express as px
 import numpy as np
 import plotly.graph_objs as go
+from sklearn import datasets
 
-app = dash.Dash('Hello World',
-                external_stylesheets=['https://codepen.io/chriddyp/pen/bWLwgP.css'])
+iris_raw = datasets.load_iris()
+iris = pd.DataFrame(iris_raw["data"], columns=iris_raw["feature_names"])
 
-app.layout = html.Div([
-    html.Div(
-        id='Navbar',
-        children=[
-            html.H5('SQC'),
-            html.Button(
-                id='learn-more-button',
-                children="LEARN MORE",
-                n_clicks=0,
+app = dash.Dash('Hello World', external_stylesheets=[dbc.themes.BOOTSTRAP])
+# external_stylesheets=['https://codepen.io/chriddyp/pen/bWLwgP.css'])
+Logo = "https://image.shutterstock.com/image-vector/milestones-line-graph-symbolizing-control-260nw-1157750989.jpg"
+controls = dbc.Card(
+    [
+        dbc.FormGroup(
+            [
+                dbc.Label('Analyzer code'),
+                dcc.Dropdown(
+                    id='Analyzer_Code',
+                    options=[
+                        {"label": col, "value": col}for col in iris.columns],
+                    value="Analyzer_code",
+                ),
+            ]
+        ),
+        # dbc.
+    ],
+    body=True,
+)
+# navbar=dbc.NavbarSimple(
+#     children=[
+#         # dbc.Col(html.Img(src=Logo,height='30px')),
+#         dbc.NavItem(dbc.NavLink('Home',href="#")),
+#         dbc.NavItem(dbc.NavLink('Results',href="#")),
+#         dbc.DropdownMenu(
+#             children=[
+#                 dbc.DropdownMenuItem("more pages",header=True),
+#                 dbc.DropdownMenuItem("anything",href="#")
+#             ],
+#             nav=True,
+#             in_navbar=True,
+#             label="More",
+#         ),
+#     ],
+#     brand="SQC Calcluator",
+#     brand_style={'font-size':'25px'},
+#     brand_href="#",
+#     color="#2e4d61",
+
+#     dark=True
+# )
+
+
+search_bar = dbc.Row(
+    [
+        dbc.Col(dbc.Input(type="search", placeholder="Search")),
+        dbc.Col(
+            dbc.Button(
+                "Search", color="primary", className="ml-2", n_clicks=0
             ),
-            html.Img(
-                src="D:/Training/index.png")
-        ],
-        style={'width': '500', 'hight': '20'}),
-    # dcc.
-    dcc.Dropdown(
-        id='my-dropdown',
-        options=[
-            {'label': 'Coke', 'value': 'COKE'},
-            {'label': 'Tesla', 'value': 'TSLA'},
-            {'label': 'Apple', 'value': 'AAPL'}
-        ],
-        value='COKE',
-        # style=
-    ),
-    # dcc.Graph(id='my-graph'),
-    # dcc.Slider(
-    #     id='slider',
-    #     min=0,
-    #     max=20,
-    #     step=0.5,
-    #     value=10,
+            width="auto",
+        ),
+    ],
+    no_gutters=True,
+    className="ml-auto flex-nowrap mt-3 mt-md-0",
+    align="center",
+)
+collapses = dbc.Row(
+    [
+        dbc.NavItem(dbc.NavLink('Home', href="#", style={'color': '#caccce'})),
+        dbc.NavItem(dbc.NavLink('Results', href="#",
+                    style={'color': '#caccce'})),
+        dbc.DropdownMenu(
+            children=[
+                dbc.DropdownMenuItem("more pages", header=True),
+                dbc.DropdownMenuItem("anything", href="#")
+            ],
 
-    # ),
-    # html.Div(id='slider_counter')
-], style={'width': '500'})
+            # nav=True,
+            # in_navbar=True,
+            label="More",
+
+        ),
+    ],
+    style={'color': '#caccce', 'background-color': "#2e4d61",
+           "verticalAlign": "right"},
+)
+# PLOTLY_LOGO = "https://images.plot.ly/logo/new-branding/plotly-logomark.png"
+navbar = dbc.Navbar(
+    [
+        html.A(
+            [
+                dbc.Row(
+                    [
+                        dbc.Col(html.Img(src=Logo, height="50px")),
+                        dbc.Col(dbc.NavbarBrand(
+                            html.H3("SQC Calcluator", className="ml-2", style={'font-weight': 'bold'}))),
+                        dbc.Row(
+                            [
+                                dbc.Col(dbc.Button(
+                                    'Home', href="#", color="#2e4d61", style={'color': '#caccce', 'display': 'right'})),
+                                dbc.Col(dbc.Button(
+                                    'Results', href="#", color="#2e4d61", style={'color': '#caccce'})),
+                                dbc.Col(dbc.DropdownMenu(
+                                    children=[
+                                        dbc.DropdownMenuItem(
+                                            "more pages", header=True),
+                                        dbc.DropdownMenuItem(
+                                            "anything", href="#")
+                                    ],
+                                    label="More",
+                                    color="#2e4d61", style={'color': '#caccce', 'hover': {'color': '#2e4d61'}},
+                                ),
+                                ),
+                            ], style={'margin-bottom': '10px',
+                                      'textAlign': 'right',
+                                      'margin': 'auto','align-items': 'flex-end'}
+                        ),
+                    ],
+
+                    no_gutters=True,
+                    style={'color': '#caccce', 'background-color': "#2e4d61","display": "flex",
+                           },
+                ),
+            ]
+        )
+    ],
+    color="#2e4d61",
+    dark=True
+
+)
+app.layout = dbc.Container(
+    [
+        # html.H1("SQC Calculator"),
+        # html.Hr(),
+        dbc.Row(dbc.Col(navbar, md=12)),
+        dbc.Row(
+            [
+                dbc.Col(controls, md=4),
+                dbc.Col(dcc.Graph(id="cluster-graph"), md=8),
+            ],
+            align="top",
+        ),
+    ],
+    fluid=True,
+)
+
+
+@app.callback(
+    Output("navbar-collapse", "is_open"),
+    [Input("navbar-toggler", "n_clicks")],
+    # [State("navbar-collapse", "is_open")],
+)
+def toggle_navbar_collapse(n, is_open):
+    if n:
+        return not is_open
+    return is_open
+# app.layout = html.Div([
+#     html.Div(
+#         id='Navbar',
+#         children=[
+#             html.H5('SQC'),
+#             html.Button(
+#                 id='learn-more-button',
+#                 children="LEARN MORE",
+#                 n_clicks=0,
+#             ),
+#             html.Img(
+#                 id='image',
+#                 src="D:/Training/index.png",style=[])
+#         ],
+#         style={'width': '500', 'hight': '20'}),
+#     # dcc.
+#     dcc.Dropdown(
+#         id='my-dropdown',
+#         options=[
+#             {'label': 'Coke', 'value': 'COKE'},
+#             {'label': 'Tesla', 'value': 'TSLA'},
+#             {'label': 'Apple', 'value': 'AAPL'}
+#         ],
+#         value='COKE',
+# style=
+# ),
+# dcc.Graph(id='my-graph'),
+# dcc.Slider(
+#     id='slider',
+#     min=0,
+#     max=20,
+#     step=0.5,
+#     value=10,
+
+# ),
+# html.Div(id='slider_counter')
+# ], style={'width': '500'})
 # @app.callback(
 #     Output('Navbar','children'),
 #     Input('')
 # )
 
 
-@app.callback(
+@ app.callback(
+    Output('image', 'src'),
+    [Input('image-dropdown', 'value')])
+def update_image_src(value):
+    return value
+
+
+@ app.callback(
 
     Output('slider_counter', 'children'),
     Input('slider', 'value')
@@ -64,12 +227,12 @@ def update_output(value):
     return 'You have selected "{}"'.format(value)
 
 
-@app.callback(
+@ app.callback(
     Output('my-graph', 'figure'),
     Input('my-dropdown', 'value1')
 )
 def update_graph(selected_dropdown_value):
-    df = pandas.read_csv("valuess.csv")
+    df = pd.read_csv("valuess.csv")
     # , usecols=col_list)
     return {
         'data': [{
