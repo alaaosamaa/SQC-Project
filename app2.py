@@ -3,12 +3,17 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
 from dash_bootstrap_components import themes
 from dash_bootstrap_components._components.Button import Button
+from dash_bootstrap_components._components.Col import Col
 from dash_bootstrap_components._components.NavItem import NavItem
 from dash_bootstrap_components._components.Row import Row
 import dash_core_components as dcc
+from dash_core_components.Dropdown import Dropdown
 import dash_html_components as html
 import csv
+from datetime import date
+import dash_table
 from dash_html_components.Font import Font
+from dash_html_components.H4 import H4
 import pandas as pd
 from pandas_datareader import data as web
 from datetime import datetime as dt
@@ -19,53 +24,160 @@ from sklearn import datasets
 
 iris_raw = datasets.load_iris()
 iris = pd.DataFrame(iris_raw["data"], columns=iris_raw["feature_names"])
-
+df = pd.read_csv(
+    'https://raw.githubusercontent.com/plotly/datasets/master/solar.csv')
+cols=['Mean','SD','CV','MU measurments','EWMA',"CUSUM","Target Mean",'Actual Mean',"Target SD","Actual SD"]
 app = dash.Dash('Hello World', external_stylesheets=[dbc.themes.MINTY])
 # external_stylesheets=['https://codepen.io/chriddyp/pen/bWLwgP.css'])
-Logo = "https://image.shutterstock.com/image-vector/milestones-line-graph-symbolizing-control-260nw-1157750989.jpg"
-
+Logo = "https://icon-library.com/images/graphs-icon/graphs-icon-4.jpg"
 # ----------------------------------------------------------Filters---------------------------------------------------
-controls = dbc.Card(
+Analyzer_control = dbc.Card(
     [
         dbc.FormGroup(
             [
-                dbc.Label('Analyzer code'),
-                dcc.Dropdown(
-                    id='Analyzer_Code',
-                    options=[
-                        {"label": col, "value": col}for col in iris.columns],
-                    value="Analyzer_code",
-                ),
-            ]
+                dbc.Col([
+                    dbc.Label('Analyzer code'),
+                    dcc.Dropdown(
+                        id='Analyzer_Code',
+                        options=[
+                            {"label": col, "value": col}for col in iris.columns],
+                        value="Analyzer_code",
+                    ),
+                ]),
+                dbc.Col([
+                    dbc.Label('Analyzer Name'),
+                    dcc.Dropdown(
+                        id='Analyzer_Name',
+                        options=[
+                            {"label": col, "value": col}for col in iris.columns],
+                        value="Analyzer_Name",
+                    ),
+                ])
+            ],
+            row=True,
         ),
     ],
     body=True,
 )
+Test_control = dbc.Card(
+    [
+        dbc.FormGroup(
+            [
+                dbc.Col([
+                    dbc.Label('Test code'),
+                    dcc.Dropdown(
+                        id='Test_Code',
+                        options=[
+                            {"label": col, "value": col}for col in iris.columns],
+                        value="Test_code",
+                    ),
+                ]),
+                dbc.Col([
+                    dbc.Label('Test Name'),
+                    dcc.Dropdown(
+                        id='Test_Name',
+                        options=[
+                            {"label": col, "value": col}for col in iris.columns],
+                        value="Test_Name",
+                    ),
+                ])
+            ], row=True,
+        )
+    ],
+    body=True,
+)
+space = dbc.Col("  ", style={"background-color": "#eaeaea", "height": "10px"})
 
-# navbar=dbc.NavbarSimple(
-#     children=[
-#         # dbc.Col(html.Img(src=Logo,height='30px')),
-#         dbc.NavItem(dbc.NavLink('Home',href="#")),
-#         dbc.NavItem(dbc.NavLink('Results',href="#")),
-#         dbc.DropdownMenu(
-#             children=[
-#                 dbc.DropdownMenuItem("more pages",header=True),
-#                 dbc.DropdownMenuItem("anything",href="#")
-#             ],
-#             nav=True,
-#             in_navbar=True,
-#             label="More",
-#         ),
-#     ],
-#     brand="SQC Calcluator",
-#     brand_style={'font-size':'25px'},
-#     brand_href="#",
-#     color="#2e4d61",
 
-#     dark=True
-# )
+Duration = dbc.Card(
+    [
+        dbc.FormGroup(
+            [
+                dbc.Col([
+                    dbc.Label('Priod Of Time'),
+                    dcc.DatePickerRange(
+                        id='my-date-picker-range',
+                        start_date_placeholder_text="Start Period",
+                        end_date_placeholder_text="End Period",
+                        calendar_orientation='vertical',
 
-PLOTLY_LOGO = "https://images.plot.ly/logo/new-branding/plotly-logomark.png"
+                    ),
+
+                    html.Div(id='output-container-date-picker-range',)
+                ]),
+            ], row=True,
+        )
+    ],
+    body=True,
+)
+Lot_Nymber = dbc.Card(
+    [
+        dbc.FormGroup(
+            [
+                dbc.Col([
+                    dbc.Label('Chemical Lot Number'),
+                    dcc.Dropdown(
+                        id='CH_Num',
+                        options=[
+                            {"label": col, "value": col}for col in iris.columns],
+                        value="CH_LOT",
+                    ),
+                ]),
+                dbc.Col([
+                    dbc.Label('QC Lot Number'),
+                    dcc.Dropdown(
+                        id='QC_Num',
+                        options=[
+                            {"label": col, "value": col}for col in iris.columns],
+                        value="QC_LOT",
+                    ),
+                ]),
+            ], row=True,
+        )
+    ],
+    body=True,
+)
+
+QC = dbc.Card(
+    [
+        dbc.FormGroup(
+            [
+                dbc.Col([
+                    dbc.Label('QC Name'),
+                    dcc.Dropdown(
+                        id='QC_Name',
+                        options=[
+                            {"label": col, "value": col}for col in iris.columns],
+                        value="QC_name",
+                    ),
+                ]),
+                dbc.Col([
+                        dbc.Label('QC Level'),
+                        dcc.Dropdown(
+                            id='QC_Level',
+                            options=[
+                                {"label": col, "value": col}for col in iris.columns],
+                            value="QC_level",
+                        ),
+                        ]),
+            ], row=True,
+        )
+    ],
+    body=True,
+)
+Calculations = dbc.Card(
+    [
+        dbc.Label(html.H4("Calculations",className="ml-2",
+                                style={'font-weight': 'bold', 'color': '#caccce', })),
+        dash_table.DataTable(
+            id='table',
+            columns=[{"name": i, "id": i} for i in cols],
+            # data=df.to_dict('records'),
+        )
+
+
+    ], body=True)
+
 search_bar = dbc.Row(
     [
         dbc.Col(dbc.Input(type="search", placeholder="Search")),
@@ -102,43 +214,12 @@ collapses = dbc.Row(
 )
 
 # --------------------------------------------------------------Nav Bar---------------------------------------
-# navbar = dbc.Navbar([html.A([
-#     dbc.Row([
-#         dbc.Col(html.Img(src=Logo, height="50px")),
-#         dbc.Col(dbc.NavbarBrand(
-#             html.H3("SQC Calculator", className="ml-2", style={'font-weight': 'bold', 'color': '#caccce', }))),
-#         # dbc.FormGroup(
-#         # [
-#         dbc.Row(
-#             [
-#                 dbc.Button(
-#                     'Home', href="#", color="#2e4d61", style={'color': '#caccce', 'display': 'flex', "Align": "right"}),
-#                 dbc.Button(
-#                     'Results', href="#", color="#2e4d61", style={'color': '#caccce'}),
-#                 dbc.DropdownMenu(
-#                     children=[
-#                         dbc.DropdownMenuItem(
-#                             "more pages", header=True),
-#                         dbc.DropdownMenuItem(
-#                             "anything", href="#",style={'color': '#caccce', 'hover': {'color': '#2e4d61'}})
-#                     ],
-#                     label="More",
-#                     color="#2e4d61", style={'color': '#caccce', 'hover': {'color': '#2e4d61'}},
-#                 ),
-#             ],
-#             style={
-#                 'textAlign': 'right',
-#                 'margin': 'auto', 'align-items': 'flex-end', "align-items": "stretch"}
-#         ),
-#     ],), ])], color="#2e4d61", dark=True,)
-
-# no_gutters=True,
-# style={'color': '#caccce', 'background-color': "#2e4d61","display": "flex",
-#    },
 
 # make a reuseable navitem for the different examples
-nav_item = dbc.NavItem(dbc.NavLink('Home', href="#", style={"color":"#caccce"},))
-nav_item2 = dbc.NavItem(dbc.NavLink('Results', href="#",style={"color":"#caccce"},))
+nav_item = dbc.NavItem(dbc.NavLink(
+    'Home', href="#", style={"color": "#caccce"},))
+nav_item2 = dbc.NavItem(dbc.NavLink(
+    'Results', href="#", style={"color": "#caccce"},))
 
 # make a reuseable dropdown for the different examples
 dropdown = dbc.DropdownMenu(
@@ -152,15 +233,17 @@ dropdown = dbc.DropdownMenu(
     in_navbar=True,
     label="Menu",
 )
-logo = dbc.Navbar(
+
+NavBar = dbc.Navbar(
     dbc.Container(
         [
             html.A(
                 # Use row and col to control vertical alignment of logo / brand
                 dbc.Row(
                     [
-                        dbc.Col(html.Img(src=Logo, height="40px")),
-                        dbc.Col(dbc.NavbarBrand(html.H4("SQC Calculator", className="ml-2", style={'font-weight': 'bold', 'color': '#caccce', }))),
+                        dbc.Col(html.Img(src=Logo, height="50px")),
+                        dbc.Col(dbc.NavbarBrand(html.H4("SQC Calculator", className="ml-2",
+                                style={'font-weight': 'bold', 'color': '#caccce', }))),
                     ],
                     align="center",
                     no_gutters=True,
@@ -170,7 +253,7 @@ logo = dbc.Navbar(
             dbc.NavbarToggler(id="navbar-toggler2", n_clicks=0),
             dbc.Collapse(
                 dbc.Nav(
-                    [nav_item,nav_item2, dropdown], className="ml-auto", navbar=True
+                    [nav_item, nav_item2, dropdown], className="ml-auto", navbar=True
                 ),
                 id="navbar-collapse2",
                 navbar=True,
@@ -181,22 +264,43 @@ logo = dbc.Navbar(
     color="#2e4d61",
     dark=True,
     className="mb-10",
-    
 )
+
 
 # -----------------------------------------------------------Whole Page-------------------------------------------------------------
 app.layout = dbc.Container(
     [
-        dbc.Row(dbc.Col(logo, md=12)),
+        dbc.Row(dbc.Col(NavBar, md=12)),
         dbc.Row(
             [
-                dbc.Col(controls, md=4),
-                dbc.Col(dcc.Graph(id="cluster-graph"), md=8),
+                dbc.Col([
+                    dbc.Col(space),
+                    dbc.Col(Duration),
+                    dbc.Col(space),
+                    dbc.Col(Analyzer_control,),
+                    dbc.Col(space),
+                    dbc.Col(Test_control),
+                    dbc.Col(space),
+                    dbc.Col(Lot_Nymber),
+                    dbc.Col(space),
+                    dbc.Col(QC),
+                ], md=4),
+
+
+                dbc.Col([
+                    dbc.Col(space),
+                    dcc.Graph(id="cluster-graph",),
+                    dbc.Col(space),
+                    dbc.Col(Calculations),
+
+                ], md=8),
             ],
             align="top",
         ),
     ],
+    style={"background-color": "#eaeaea", "height": "100vh"},
     fluid=True,
+
 )
 
 # --------------------------------------------------------------------Functions------------------------------------------
@@ -211,6 +315,27 @@ def toggle_navbar_collapse(n, is_open):
     if n:
         return not is_open
     return is_open
+
+
+@app.callback(
+    dash.dependencies.Output('output-container-date-picker-range', 'children'),
+    [dash.dependencies.Input('my-date-picker-range', 'start_date'),
+     dash.dependencies.Input('my-date-picker-range', 'end_date')])
+def update_output(start_date, end_date):
+    string_prefix = 'You have selected: '
+    if start_date is not None:
+        start_date_object = date.fromisoformat(start_date)
+        start_date_string = start_date_object.strftime('%B %d, %Y')
+        string_prefix = string_prefix + 'Start Date: ' + start_date_string + ' | '
+    if end_date is not None:
+        end_date_object = date.fromisoformat(end_date)
+        end_date_string = end_date_object.strftime('%B %d, %Y')
+        string_prefix = string_prefix + 'End Date: ' + end_date_string
+    if len(string_prefix) == len('You have selected: '):
+        return 'Select a date to see it displayed here'
+    else:
+        return string_prefix
+
 # app.layout = html.Div([
 #     html.Div(
 #         id='Navbar',
