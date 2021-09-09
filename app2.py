@@ -20,9 +20,11 @@ from sklearn import datasets
 iris_raw = datasets.load_iris()
 iris = pd.DataFrame(iris_raw["data"], columns=iris_raw["feature_names"])
 
-app = dash.Dash('Hello World', external_stylesheets=[dbc.themes.BOOTSTRAP])
+app = dash.Dash('Hello World', external_stylesheets=[dbc.themes.MINTY])
 # external_stylesheets=['https://codepen.io/chriddyp/pen/bWLwgP.css'])
 Logo = "https://image.shutterstock.com/image-vector/milestones-line-graph-symbolizing-control-260nw-1157750989.jpg"
+
+# ----------------------------------------------------------Filters---------------------------------------------------
 controls = dbc.Card(
     [
         dbc.FormGroup(
@@ -36,10 +38,10 @@ controls = dbc.Card(
                 ),
             ]
         ),
-        # dbc.
     ],
     body=True,
 )
+
 # navbar=dbc.NavbarSimple(
 #     children=[
 #         # dbc.Col(html.Img(src=Logo,height='30px')),
@@ -63,7 +65,7 @@ controls = dbc.Card(
 #     dark=True
 # )
 
-
+PLOTLY_LOGO = "https://images.plot.ly/logo/new-branding/plotly-logomark.png"
 search_bar = dbc.Row(
     [
         dbc.Col(dbc.Input(type="search", placeholder="Search")),
@@ -98,55 +100,94 @@ collapses = dbc.Row(
     style={'color': '#caccce', 'background-color': "#2e4d61",
            "verticalAlign": "right"},
 )
-# PLOTLY_LOGO = "https://images.plot.ly/logo/new-branding/plotly-logomark.png"
-navbar = dbc.Navbar(
-    [
-        html.A(
-            [
+
+# --------------------------------------------------------------Nav Bar---------------------------------------
+# navbar = dbc.Navbar([html.A([
+#     dbc.Row([
+#         dbc.Col(html.Img(src=Logo, height="50px")),
+#         dbc.Col(dbc.NavbarBrand(
+#             html.H3("SQC Calculator", className="ml-2", style={'font-weight': 'bold', 'color': '#caccce', }))),
+#         # dbc.FormGroup(
+#         # [
+#         dbc.Row(
+#             [
+#                 dbc.Button(
+#                     'Home', href="#", color="#2e4d61", style={'color': '#caccce', 'display': 'flex', "Align": "right"}),
+#                 dbc.Button(
+#                     'Results', href="#", color="#2e4d61", style={'color': '#caccce'}),
+#                 dbc.DropdownMenu(
+#                     children=[
+#                         dbc.DropdownMenuItem(
+#                             "more pages", header=True),
+#                         dbc.DropdownMenuItem(
+#                             "anything", href="#",style={'color': '#caccce', 'hover': {'color': '#2e4d61'}})
+#                     ],
+#                     label="More",
+#                     color="#2e4d61", style={'color': '#caccce', 'hover': {'color': '#2e4d61'}},
+#                 ),
+#             ],
+#             style={
+#                 'textAlign': 'right',
+#                 'margin': 'auto', 'align-items': 'flex-end', "align-items": "stretch"}
+#         ),
+#     ],), ])], color="#2e4d61", dark=True,)
+
+# no_gutters=True,
+# style={'color': '#caccce', 'background-color': "#2e4d61","display": "flex",
+#    },
+
+# make a reuseable navitem for the different examples
+nav_item = dbc.NavItem(dbc.NavLink('Home', href="#", style={"color":"#caccce"},))
+nav_item2 = dbc.NavItem(dbc.NavLink('Results', href="#",style={"color":"#caccce"},))
+
+# make a reuseable dropdown for the different examples
+dropdown = dbc.DropdownMenu(
+    children=[
+        dbc.DropdownMenuItem(
+            "more pages", header=True),
+        dbc.DropdownMenuItem(
+            "anything", href="#", style={'color': '#caccce', 'hover': {'color': '#2e4d61'}})
+    ],
+    nav=True,
+    in_navbar=True,
+    label="Menu",
+)
+logo = dbc.Navbar(
+    dbc.Container(
+        [
+            html.A(
+                # Use row and col to control vertical alignment of logo / brand
                 dbc.Row(
                     [
-                        dbc.Col(html.Img(src=Logo, height="50px")),
-                        dbc.Col(dbc.NavbarBrand(
-                            html.H3("SQC Calcluator", className="ml-2", style={'font-weight': 'bold'}))),
-                        dbc.Row(
-                            [
-                                dbc.Col(dbc.Button(
-                                    'Home', href="#", color="#2e4d61", style={'color': '#caccce', 'display': 'right'})),
-                                dbc.Col(dbc.Button(
-                                    'Results', href="#", color="#2e4d61", style={'color': '#caccce'})),
-                                dbc.Col(dbc.DropdownMenu(
-                                    children=[
-                                        dbc.DropdownMenuItem(
-                                            "more pages", header=True),
-                                        dbc.DropdownMenuItem(
-                                            "anything", href="#")
-                                    ],
-                                    label="More",
-                                    color="#2e4d61", style={'color': '#caccce', 'hover': {'color': '#2e4d61'}},
-                                ),
-                                ),
-                            ], style={'margin-bottom': '10px',
-                                      'textAlign': 'right',
-                                      'margin': 'auto','align-items': 'flex-end'}
-                        ),
+                        dbc.Col(html.Img(src=Logo, height="40px")),
+                        dbc.Col(dbc.NavbarBrand(html.H4("SQC Calculator", className="ml-2", style={'font-weight': 'bold', 'color': '#caccce', }))),
                     ],
-
+                    align="center",
                     no_gutters=True,
-                    style={'color': '#caccce', 'background-color': "#2e4d61","display": "flex",
-                           },
                 ),
-            ]
-        )
-    ],
+                href="#",
+            ),
+            dbc.NavbarToggler(id="navbar-toggler2", n_clicks=0),
+            dbc.Collapse(
+                dbc.Nav(
+                    [nav_item,nav_item2, dropdown], className="ml-auto", navbar=True
+                ),
+                id="navbar-collapse2",
+                navbar=True,
+            ),
+        ],
+        fluid=True,
+    ),
     color="#2e4d61",
-    dark=True
-
+    dark=True,
+    className="mb-10",
+    
 )
+
+# -----------------------------------------------------------Whole Page-------------------------------------------------------------
 app.layout = dbc.Container(
     [
-        # html.H1("SQC Calculator"),
-        # html.Hr(),
-        dbc.Row(dbc.Col(navbar, md=12)),
+        dbc.Row(dbc.Col(logo, md=12)),
         dbc.Row(
             [
                 dbc.Col(controls, md=4),
@@ -157,6 +198,8 @@ app.layout = dbc.Container(
     ],
     fluid=True,
 )
+
+# --------------------------------------------------------------------Functions------------------------------------------
 
 
 @app.callback(
