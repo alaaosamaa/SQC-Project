@@ -8,9 +8,9 @@ from dash_bootstrap_components._components.Row import Row
 import dash_core_components as dcc
 import dash_html_components as html
 import csv
-from dash_html_components.Font import Font
+# from dash_html_components.Font import Font
 import pandas as pd
-from pandas_datareader import data as web
+# from pandas_datareader import data as web
 from datetime import datetime as dt
 import plotly.express as px
 import numpy as np
