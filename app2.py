@@ -28,7 +28,8 @@ iris_raw = datasets.load_iris()
 iris = pd.DataFrame(iris_raw["data"], columns=iris_raw["feature_names"])
 df = pd.read_csv(
     'https://raw.githubusercontent.com/plotly/datasets/master/solar.csv')
-cols=['Mean','SD','CV','MU measurments','EWMA',"CUSUM","Target Mean",'Actual Mean',"Target SD","Actual SD"]
+tableCols=['Mean','SD','CV','MU measurments','EWMA',"CUSUM","Target Mean",'Actual Mean',"Target SD","Actual SD"]
+tableValues=[1,2,3,4,5,6,7,8,9,10]
 app = dash.Dash('Hello World', external_stylesheets=[dbc.themes.MINTY,dbc.themes.BOOTSTRAP])
 # external_stylesheets=['https://codepen.io/chriddyp/pen/bWLwgP.css'])
 Logo = "https://icon-library.com/images/graphs-icon/graphs-icon-4.jpg"
@@ -36,6 +37,9 @@ Logo = "https://icon-library.com/images/graphs-icon/graphs-icon-4.jpg"
 
 space = dbc.Row("  ", style={ "height": "10px"})
 cardShadw = ["shadow-sm p-3 mb-5 bg-white rounded" ,{"margin-top": "-2em"}]
+tableRows =[
+    html.Tr([html.Td(i) for i in tableCols]),html.Tr([html.Td(i) for i in tableValues])
+]
 
 
 Duration = dbc.Card(
@@ -185,22 +189,31 @@ QC = dbc.Card(
     style = cardShadw[1]
 )
 
-plotButton = dbc.Button("Calculate and Plot",outline=True,color='secondary',block=True,
+plotButton = dbc.Button("Calculate and Plot",id='plotButton',outline=True,color='secondary',block=True,
 style={'background-color':'#2D4D61 !important',"margin-top": "-1em"}
 )
+
 
 Calculations = dbc.Card(
     [
         dbc.Label(html.H4("Calculations",className="ml-2",
                                 style={'font-weight': 'bold', 'color': '#caccce', })),
-        dash_table.DataTable(
-            id='table',
-            columns=[{"name": i, "id": i} for i in cols],
-            # data=df.to_dict('records'),
+          
+        # dash_table.DataTable(
+        #     id='table',
+        #     columns=[{"name": i, "id": i} for i in tableCols],
+        #     # data=df.to_dict('records'),
+        # ),
+        dbc.Col(space),
+        dbc.Table(html.Tbody(tableRows), bordered=True,striped = True,responsive =True,
+        style = {"text-align":"center"}
         )
-
-
-    ], body=True)
+    ], 
+    body =True,
+    className = cardShadw[0],
+    style = {"width":"103.5%","margin-left":"-1em"}
+    
+    )
 
 search_bar = dbc.Row(
     [
@@ -322,10 +335,11 @@ app.layout = dbc.Container(
                 ], md=4),
 
                 dbc.Col([
-                    dbc.Col(space),
+                    # dbc.Col(space),
                     dbc.Col(Calculations),
                     dbc.Col(space),
-                    dcc.Graph(id="cluster-graph",),
+                    dcc.Graph(id="cluster-graph",
+                    style={"margin-top": "-3em"}),
 
                 ], md=8),
             ],
