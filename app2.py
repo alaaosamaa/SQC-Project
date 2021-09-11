@@ -1,4 +1,6 @@
+from os import terminal_size
 import dash
+from dash.html.Shadow import Shadow
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
 from dash_bootstrap_components import themes
@@ -27,37 +29,71 @@ iris = pd.DataFrame(iris_raw["data"], columns=iris_raw["feature_names"])
 df = pd.read_csv(
     'https://raw.githubusercontent.com/plotly/datasets/master/solar.csv')
 cols=['Mean','SD','CV','MU measurments','EWMA',"CUSUM","Target Mean",'Actual Mean',"Target SD","Actual SD"]
-app = dash.Dash('Hello World', external_stylesheets=[dbc.themes.MINTY])
+app = dash.Dash('Hello World', external_stylesheets=[dbc.themes.MINTY,dbc.themes.BOOTSTRAP])
 # external_stylesheets=['https://codepen.io/chriddyp/pen/bWLwgP.css'])
 Logo = "https://icon-library.com/images/graphs-icon/graphs-icon-4.jpg"
 # ----------------------------------------------------------Filters---------------------------------------------------
-Analyzer_control = dbc.Card(
+
+space = dbc.Row("  ", style={ "height": "10px"})
+cardShadw = ["shadow-sm p-3 mb-5 bg-white rounded" ,{"margin-top": "-2em"}]
+
+
+Duration = dbc.Card(
     [
         dbc.FormGroup(
             [
                 dbc.Col([
+                    dbc.Label('Priod Of Time'),
+                    dcc.DatePickerRange(
+                        id='my-date-picker-range',
+                        start_date_placeholder_text="Start Period",
+                        end_date_placeholder_text="End Period",
+                        calendar_orientation='vertical',
+
+                    ),
+                    dbc.Col(space),
+                    html.Div(id='output-container-date-picker-range',)
+                ]),
+            ], row=True,
+        ),
+    ],
+    body=True,
+    className = cardShadw[0],
+
+)
+
+Analyzer_control = dbc.Card(
+    [
+        dbc.FormGroup(
+            [
+                # dbc.Col([
                     dbc.Label('Analyzer code'),
                     dcc.Dropdown(
                         id='Analyzer_Code',
                         options=[
                             {"label": col, "value": col}for col in iris.columns],
                         value="Analyzer_code",
+                        multi=True
                     ),
-                ]),
-                dbc.Col([
+                # ]),
+                # dbc.Col([
+                    dbc.Col(space),
                     dbc.Label('Analyzer Name'),
                     dcc.Dropdown(
                         id='Analyzer_Name',
                         options=[
                             {"label": col, "value": col}for col in iris.columns],
                         value="Analyzer_Name",
+                        multi=True
                     ),
-                ])
+                # ])
             ],
-            row=True,
+            # row=True,
         ),
     ],
     body=True,
+    className = cardShadw[0],
+    style = cardShadw[1]
 )
 Test_control = dbc.Card(
     [
@@ -85,31 +121,10 @@ Test_control = dbc.Card(
         )
     ],
     body=True,
+    className = cardShadw[0],
+    style = cardShadw[1]
 )
-space = dbc.Col("  ", style={ "height": "10px"})
 
-
-Duration = dbc.Card(
-    [
-        dbc.FormGroup(
-            [
-                dbc.Col([
-                    dbc.Label('Priod Of Time'),
-                    dcc.DatePickerRange(
-                        id='my-date-picker-range',
-                        start_date_placeholder_text="Start Period",
-                        end_date_placeholder_text="End Period",
-                        calendar_orientation='vertical',
-
-                    ),
-                    dbc.Col(space),
-                    html.Div(id='output-container-date-picker-range',)
-                ]),
-            ], row=True,
-        )
-    ],
-    body=True,
-)
 Lot_Nymber = dbc.Card(
     [
         dbc.FormGroup(
@@ -136,6 +151,8 @@ Lot_Nymber = dbc.Card(
         )
     ],
     body=True,
+    className = cardShadw[0],
+    style = cardShadw[1]
 )
 
 QC = dbc.Card(
@@ -164,7 +181,14 @@ QC = dbc.Card(
         )
     ],
     body=True,
+    className = cardShadw[0],
+    style = cardShadw[1]
 )
+
+plotButton = dbc.Button("Calculate and Plot",outline=True,color='secondary',block=True,
+style={'background-color':'#2D4D61 !important',"margin-top": "-1em"}
+)
+
 Calculations = dbc.Card(
     [
         dbc.Label(html.H4("Calculations",className="ml-2",
@@ -278,25 +302,30 @@ app.layout = dbc.Container(
                    [
                     dbc.Col(space),
                     dbc.Col(Duration),
-                    dbc.Col(space),
+                    # dbc.Col(space),
                     dbc.Col(Analyzer_control,),
-                    dbc.Col(space),
+                    # dbc.Col(space),
                     dbc.Col(Test_control),
-                    dbc.Col(space),
+                    # dbc.Col(space),
                     dbc.Col(Lot_Nymber),
-                    dbc.Col(space),
+                    # dbc.Col(space),
                     dbc.Col(QC),
+                    # dbc.Col(space),
+                    # dbc.Col(space),
+                    dbc.Col(plotButton),
                     dbc.Col(space)
                     ],
-                    body=True
+                    body=True,
+                    # style={"overflowY": "scroll"}
+                    # className = "shadow-sm p-3 mb-5 bg-white rounded"
                     )
                 ], md=4),
 
                 dbc.Col([
                     dbc.Col(space),
-                    dcc.Graph(id="cluster-graph",),
-                    dbc.Col(space),
                     dbc.Col(Calculations),
+                    dbc.Col(space),
+                    dcc.Graph(id="cluster-graph",),
 
                 ], md=8),
             ],
@@ -328,7 +357,7 @@ def toggle_navbar_collapse(n, is_open):
     [dash.dependencies.Input('my-date-picker-range', 'start_date'),
      dash.dependencies.Input('my-date-picker-range', 'end_date')])
 def update_output(start_date, end_date):
-    string_prefix = 'You have selected: '
+    string_prefix = ''
     if start_date is not None:
         start_date_object = date.fromisoformat(start_date)
         start_date_string = start_date_object.strftime('%B %d, %Y')
@@ -337,7 +366,7 @@ def update_output(start_date, end_date):
         end_date_object = date.fromisoformat(end_date)
         end_date_string = end_date_object.strftime('%B %d, %Y')
         string_prefix = string_prefix + 'End Date: ' + end_date_string
-    if len(string_prefix) == len('You have selected: '):
+    if len(string_prefix) == len(''):
         return 'Select a date to see it displayed here'
     else:
         return string_prefix
