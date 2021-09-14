@@ -1,19 +1,19 @@
 import mysql.connector
 
 mydb = mysql.connector.connect(
-    host="localhost",
-    user="root",
-    passwd="mysql"
+    host = "localhost",
+    user = "root",
+    passwd = "mysql"
 )
 mycursor = mydb.cursor()
 
 mycursor.execute("CREATE DATABASE IF NOT EXISTS SQC")
 
 mydb = mysql.connector.connect(
-    host="localhost",
-    user="root",
-    passwd="mysql",
-    database="SQC"
+    host = "localhost",
+    user = "root",
+    passwd = "mysql",
+    database = "SQC"
 )
 mycursor = mydb.cursor()
 
