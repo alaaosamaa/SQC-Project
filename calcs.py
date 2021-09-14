@@ -2,14 +2,17 @@ import math
 import statistics
 import pandas
 import numpy as np
+from uncertainties import ufloat
 
-np.random()
+
+# np.random()
 sample1 = [4.5, 5, 6]
 sample2 = [10, 12, 14, 16, 18, 20]
   
 # Computing sample standard deviation and mean for sample1
 SD1 = statistics.stdev(sample1)
-Mean1 = statistics.mean(sample1) 
+Mean1 = statistics.mean(sample1)
+MeanUncertainty = ufloat(Mean1,0.01)
 
 # Computing sample standard deviation and mean for sample2
 SD2 = statistics.stdev(sample2)   
@@ -27,7 +30,9 @@ pooled_standard_deviation = math.sqrt(((n1 - 1)*SD1 * SD1 +(n2-1)*SD2 * SD2) / (
 cv = (SD1/Mean1)*100
 
 # Calculate the Exponentially weighted moving average (EWMA)
-EWMA = pandas.DataFrame.ewm(sample1)
+# EWMA = pandas.DataFrame.ewm(sample1)
 print("Pooled Standard Deviation = ",pooled_standard_deviation)
-print("Mean1 = ",Mean1 , ",SD1 = ", SD1 , ",CV1 = ",cv, ",EWMA = ",EWMA)
+# print("Mean1 = ",Mean1 , ",SD1 = ", SD1 , ",CV1 = ",cv, ",EWMA = ",EWMA)
+
+print(MeanUncertainty)
 
