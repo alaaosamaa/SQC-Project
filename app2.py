@@ -18,14 +18,32 @@ import plotly.express as px
 import numpy as np
 import plotly.graph_objs as go
 from sklearn import datasets
+import mysql.connector
+import dash
+import dash_core_components as dcc
+import dash_html_components as html
+import pandas as pd
+import plotly.graph_objs as go
+
+
+mydb = mysql.connector.connect(
+    host = "localhost",
+    user = "root",
+    passwd = "mysql",
+    database = "SQC"
+)
+mycursor = mydb.cursor()
+
 
 # Read data 
 iris_raw = datasets.load_iris()
 iris = pd.DataFrame(iris_raw["data"], columns=iris_raw["feature_names"])
+# df = pd.read_sql("SELECT analyzer_name, analyzer_code FROM Analyzer WHERE analyzer_output = 'output2'", mydb)
 
 
 # Array of table attributes 
 tableCols=['Mean','SD','CV','MU measurments','EWMA',"CUSUM","Target Mean",'Actual Mean',"Target SD","Actual SD"]
+# tableCols = [df.analyzer_name[0],df.analyzer_name[1], df.analyzer_name[2]]
 
 # Array of table values
 tableValues=[1,2,3,4,5,6,7,8,9,10]
