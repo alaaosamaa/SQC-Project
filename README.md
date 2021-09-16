@@ -1,4 +1,6 @@
 # SQC-Project
-run command before running conda install -c anaconda mysql-connector-python
+Run command before running conda install -c anaconda mysql-connector-python
 
-to view database download and install ampps
+To view database download and install ampps
+Then run database.py file 
+Then app2.py
