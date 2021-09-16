@@ -24,53 +24,118 @@ import dash_core_components as dcc
 import dash_html_components as html
 import pandas as pd
 import plotly.graph_objs as go
+import math
+import statistics
+import pandas
+from uncertainties import ufloat
 
 
 mydb = mysql.connector.connect(
-    host = "localhost",
-    user = "root",
-    passwd = "mysql",
-    database = "SQC"
+    host="localhost",
+    user="root",
+    passwd="mysql",
+    database="SQC"
 )
 mycursor = mydb.cursor()
 
 
-# Read data 
+# Read data
 iris_raw = datasets.load_iris()
 iris = pd.DataFrame(iris_raw["data"], columns=iris_raw["feature_names"])
 # df = pd.read_sql("SELECT analyzer_name, analyzer_code FROM Analyzer WHERE analyzer_output = 'output2'", mydb)
 
+# Create random data
+Sample1 = np.random.randint(15, 20, size=100)
+Sample2 = np.random.randint(11, 17, size=100)
 
-# Array of table attributes 
-tableCols=['Mean','SD','CV','MU measurments','EWMA',"CUSUM","Target Mean",'Actual Mean',"Target SD","Actual SD"]
+
+# Array of table attributes
+# tableCols = ['Mean', 'SD', 'CV', 'MU measurments', 'EWMA',
+#              'CUSUM', 'Target Mean', 'Actual Mean', 'Target SD', 'Actual SD']
+tableCols = ['Mean', 'SD', 'CV', 'EWMA']
 # tableCols = [df.analyzer_name[0],df.analyzer_name[1], df.analyzer_name[2]]
 
 # Array of table values
-tableValues=[1,2,3,4,5,6,7,8,9,10]
+tableValues = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
 # Array of table rows
-tableRows =[
-    html.Tr([html.Td(i) for i in tableCols]),html.Tr([html.Td(i) for i in tableValues])
+tableRows = [
+    html.Tr([html.Td(i) for i in tableCols]), html.Tr(
+        [html.Td(i) for i in tableValues])
 ]
 
 # Main Application page
-app = dash.Dash('Hello World', external_stylesheets=[dbc.themes.MINTY,dbc.themes.BOOTSTRAP])
+app = dash.Dash('Hello World', external_stylesheets=[
+                dbc.themes.MINTY, dbc.themes.BOOTSTRAP])
 
-# App Logo image 
+# App Logo image
 Logo = "https://icon-library.com/images/graphs-icon/graphs-icon-4.jpg"
+
+
+# --------------------------------------------------------------Calculations---------------------------------------
+
+# Computing mean for array of data 
+def Data_Mean(dataArray):
+    return statistics.mean(dataArray)
+
+
+# Computing standard deviation for array of data
+def Data_SD(dataArray):
+    return round(statistics.stdev(dataArray),1) 
+
+
+# calculate pooled standard deviation (SD)
+def Booled_SD(dataArray1,dataArray2):
+    n1, n2 = len(dataArray1),len(dataArray2)
+    dataArray1_SD, dataArray2_SD = Data_SD(dataArray1) ,Data_SD(dataArray2)
+    pooled_standard_deviation = math.sqrt(((n1 - 1)*dataArray1_SD * dataArray1_SD +(n2-1)*dataArray2_SD * dataArray2_SD) / (n1 + n2-2))
+    return round(pooled_standard_deviation,1)
+
+# Calculate Coefficient of Variation for data array(CV)
+def Data_CV(dataArray):
+    dataArray_Mean = Data_Mean(dataArray)
+    dataArray_SD = Data_SD(dataArray)
+    return round((dataArray_SD/dataArray_Mean)*100,1)
+
+# Calculate Measurments Uncertainty (MU)
+def Data_MU(dataArray):
+    dataArray_Mean = Data_Mean(dataArray)
+    return ufloat(dataArray_Mean,0.01)
+
+# Compute the Calculate the Exponentially weighted moving average (EWMA)
+def Data_EWMA(dataArray):
+#   EWMA = pd.DataFrame.ewm(dataArray)
+  return 1
+
+# Calculate Cumulative Sum of data array (CUSUM)
+def Data_CUSUM(dataArray):
+    
+    return np.cumsum(dataArray)
+
+
+# Calculate all and return an array of all statistical calculations 
+def Calculate_All(dataArray):
+   dataArray_Mean = Data_Mean(dataArray)
+   dataArray_SD = Data_SD(dataArray)
+   dataArray_CV = Data_CV(dataArray)
+#    dataArray_MU = Data_MU(dataArray)
+   dataArray_EWMA = Data_EWMA(dataArray)
+#    dataArray_CUSUM = Data_CUSUM(dataArray)
+   Calculations_Array = [dataArray_Mean, dataArray_SD, dataArray_CV, dataArray_EWMA]
+   return Calculations_Array
 
 
 
 # ----------------------------------------------------------Page Components---------------------------------------------------
 
-# Space components 
-space = dbc.Row("  ", style={ "height": "10px"})
+# Space components
+space = dbc.Row("  ", style={"height": "10px"})
 
 # Mini space
-miniSpace = dbc.Row("  ", style={ "height": "5px"})
+miniSpace = dbc.Row("  ", style={"height": "5px"})
 
 # Cards shadow
-cardShadow = ["shadow-sm p-3 mb-5 bg-white rounded" ,{"margin-top": "-2em"}]
+cardShadow = ["shadow-sm p-3 mb-5 bg-white rounded", {"margin-top": "-2em"}]
 
 # Card to select period of time for data to plot it
 Duration = dbc.Card(
@@ -93,55 +158,55 @@ Duration = dbc.Card(
         ),
     ],
     body=True,
-    className = cardShadow[0],
+    className=cardShadow[0],
 
 )
 
-# Card to select Analyzer name and code of the data 
+# Card to select Analyzer name and code of the data
 Analyzer_control = dbc.Card(
     [
         dbc.FormGroup(
             [
-            dbc.Label('Analyzer'),
-            dbc.Col(space),
-            dcc.Dropdown(
-                id='Analyzer_Code',
-                options=[
-                    {"label": col, "value": col}for col in iris.columns],
-                value="Analyzer_code",
-                multi=True,
-                placeholder = 'Select Analyzer Code'
-            ),
-            dbc.Col(space),
-            dcc.Dropdown(
-                id='Analyzer_Name',
-                options=[
-                    {"label": col, "value": col}for col in iris.columns],
-                value="Analyzer_Name",
-                multi=True,
-                placeholder = 'Select Analyzer Name'
-            ),
+                dbc.Label('Analyzer'),
+                dbc.Col(space),
+                dcc.Dropdown(
+                    id='Analyzer_Code',
+                    options=[
+                        {"label": col, "value": col}for col in iris.columns],
+                    value="Analyzer_code",
+                    multi=True,
+                    placeholder='Select Analyzer Code'
+                ),
+                dbc.Col(space),
+                dcc.Dropdown(
+                    id='Analyzer_Name',
+                    options=[
+                        {"label": col, "value": col}for col in iris.columns],
+                    value="Analyzer_Name",
+                    multi=True,
+                    placeholder='Select Analyzer Name'
+                ),
             ],
         ),
     ],
     body=True,
-    className = cardShadow[0],
-    style = cardShadow[1]
+    className=cardShadow[0],
+    style=cardShadow[1]
 )
 
 # Card to select Test code , name and reagent lot number
 Test_control = dbc.Card(
     [
         dbc.FormGroup(
-            [    
+            [
                 dbc.Label('Test'),
                 dcc.Dropdown(
-                    id='Test_Code', 
+                    id='Test_Code',
                     options=[
                         {"label": col, "value": col}for col in iris.columns],
                     value="Test_code",
                     multi=True,
-                    placeholder = 'Select Test Code'
+                    placeholder='Select Test Code'
                 ),
                 dbc.Col(space),
                 dcc.Dropdown(
@@ -150,23 +215,23 @@ Test_control = dbc.Card(
                         {"label": col, "value": col}for col in iris.columns],
                     value="Test_Name",
                     multi=True,
-                    placeholder = 'Select Test Name'
+                    placeholder='Select Test Name'
                 ),
                 dbc.Col(space),
-                dcc.Dropdown(   
+                dcc.Dropdown(
                     id='CH_Num',
                     options=[
                         {"label": col, "value": col}for col in iris.columns],
                     value="CH_LOT",
                     multi=True,
-                    placeholder = 'Select Reagent Ot Number'
+                    placeholder='Select Reagent Ot Number'
                 ),
-            ], 
+            ],
         )
     ],
     body=True,
-    className = cardShadow[0],
-    style = cardShadow[1]
+    className=cardShadow[0],
+    style=cardShadow[1]
 )
 
 # Card to select quality control name and level
@@ -175,14 +240,14 @@ QC = dbc.Card(
         dbc.FormGroup(
             [
                 dbc.Label('QC'),
-                    dcc.Dropdown(
-                        id='QC_Num',
-                        options=[
-                            {"label": col, "value": col}for col in iris.columns],
-                        value="QC_LOT",
-                        multi=True,
-                        placeholder = 'Select QC Lot Number'
-                    ),            
+                dcc.Dropdown(
+                    id='QC_Num',
+                    options=[
+                        {"label": col, "value": col}for col in iris.columns],
+                    value="QC_LOT",
+                    multi=True,
+                    placeholder='Select QC Lot Number'
+                ),
                 dbc.Col(space),
                 dcc.Dropdown(
                     id='QC_Name',
@@ -190,45 +255,56 @@ QC = dbc.Card(
                         {"label": col, "value": col}for col in iris.columns],
                     value="QC_name",
                     multi=True,
-                    placeholder = 'Select QC Name'
+                    placeholder='Select QC Name'
                 ),
-                dbc.Col(space),    
+                dbc.Col(space),
                 dcc.Dropdown(
                     id='QC_Level',
                     options=[
                         {"label": col, "value": col}for col in iris.columns],
                     value="QC_level",
                     multi=True,
-                    placeholder = 'Select QC Level'
+                    placeholder='Select QC Level'
                 ),
-            ], 
+            ],
         )
     ],
     body=True,
-    className = cardShadow[0],
-    style = cardShadow[1]
+    className=cardShadow[0],
+    style=cardShadow[1]
 )
 
 # Calculate Statistical calculations and plot control chart
-plotButton = dbc.Button("Calculate and Plot",id='plotButton',outline=True,color='secondary',block=True,
-style={'background-color':'#2D4D61 !important',"margin-top": "-1em"}
-)
+plotButton = dbc.Button("Calculate and Plot", id='Plot_Button',n_clicks = 0, outline=True, color='secondary', block=True,
+                        style={'background-color': '#2D4D61 !important',
+                               "margin-top": "-1em"}
+                        )
 
 # Table of calculations
 Calculations = dbc.Card(
     [
-        dbc.Label(html.H4("Calculations",className="ml-2",
-                                style={'font-weight': 'bold', 'color': '#caccce', })),
+        dbc.Label(html.H4("Calculations", className="ml-2",
+                          style={'font-weight': 'bold', 'color': '#caccce', })),
         dbc.Col(space),
-        dbc.Table(html.Tbody(tableRows), bordered=True,striped = True,responsive =True,
-        style = {"text-align":"center"}
-        )
-    ], 
-    body =True,
-    className = cardShadow[0],
-    style = {"width":"103.5%","margin-left":"-1em"}
-    
-    )
+        dbc.Table(id = 'Calcs_Table')
+        # dbc.Table(html.Tbody(id = 'Calcs_Table'), bordered=True, striped=True, responsive=True,
+        #           style={"text-align": "center"}
+        #           )
+        # dash_table.DataTable(
+        #     id = "Calcs_Table",
+        #     columns = (
+        #     [{'id': c, 'name': c} for c in tableCols]
+        #     ),
+        #     # data = [{v for v in tableValues}],
+            
+        # )
+        # 
+    ],
+    body=True,
+    className=cardShadow[0],
+    style={"width": "103.5%", "margin-left": "-1em"}
+
+)
 
 
 # --------------------------------------------------------------Nav Bar---------------------------------------
@@ -261,7 +337,7 @@ NavBar = dbc.Navbar(
                     [
                         dbc.Col(html.Img(src=Logo, height="50px")),
                         dbc.Col(dbc.NavbarBrand(html.H4("SQC Calculator", className="ml-2",
-                                style={'font-weight': 'bold', 'color': '#caccce', }))),
+                                                        style={'font-weight': 'bold', 'color': '#caccce', }))),
                     ],
                     align="center",
                     no_gutters=True,
@@ -296,32 +372,32 @@ app.layout = dbc.Container(
                 # Filters card
                 dbc.Col([
                     dbc.Card(
-                   [
-                    dbc.Col(space),
-                    dbc.Col(Duration),
-                    dbc.Col(Analyzer_control,),
-                    dbc.Col(Test_control),
-                    dbc.Col(QC),
-                    dbc.Col(plotButton),
-                    dbc.Col(space)
-                    ],
-                    body=True,
-                    # style={"overflowY": "scroll"}
-                    # className = "shadow-sm p-3 mb-5 bg-white rounded"
+                        [
+                            dbc.Col(space),
+                            dbc.Col(Duration),
+                            dbc.Col(Analyzer_control,),
+                            dbc.Col(Test_control),
+                            dbc.Col(QC),
+                            dbc.Col(plotButton),
+                            dbc.Col(space)
+                        ],
+                        body=True,
+                        # style={"overflowY": "scroll"}
+                        # className = "shadow-sm p-3 mb-5 bg-white rounded"
                     )
                 ], md=4),
-                
+
                 # Calculations and plot card
                 dbc.Col([
                     dbc.Col(Calculations),
                     dbc.Col(space),
                     dcc.Graph(id="cluster-graph",
-                    style={"margin-top": "-3em"}),
+                              style={"margin-top": "-3em"}),
 
                 ], md=8),
             ],
             align="top",
-            style={"margin-top": "1rem","padding-bottom": "1rem"}
+            style={"margin-top": "1rem", "padding-bottom": "1rem"}
         ),
     ],
     style={"background-color": "#eaeaea", "height": "100%"},
@@ -332,6 +408,8 @@ app.layout = dbc.Container(
 # --------------------------------------------------------------------Functions------------------------------------------
 
 # Navbar
+
+
 @app.callback(
     Output("navbar-collapse", "is_open"),
     [Input("navbar-toggler", "n_clicks")],
@@ -341,6 +419,7 @@ def toggle_navbar_collapse(n, is_open):
     if n:
         return not is_open
     return is_open
+
 
 # Select period Function
 @app.callback(
@@ -362,7 +441,18 @@ def update_output(start_date, end_date):
     else:
         return string_prefix
 
-
+# Calculate Button Function
+@app.callback(Output('Calcs_Table', 'children'),
+              Input('Plot_Button', 'n_clicks'))
+def Calculate(n_clicks):
+    table_Rows=[]
+    if n_clicks > 0 :
+        table_Values = Calculate_All(Sample1)
+        table_Rows = [
+        html.Tr([html.Td(i) for i in tableCols]), html.Tr(
+        [html.Td(i) for i in table_Values])
+        ]
+    return html.Tbody(table_Rows)
 
 if __name__ == '__main__':
     app.run_server(debug=True)
