@@ -38,12 +38,12 @@ mycursor = mydb.cursor()
 # Read data 
 iris_raw = datasets.load_iris()
 iris = pd.DataFrame(iris_raw["data"], columns=iris_raw["feature_names"])
-# df = pd.read_sql("SELECT analyzer_name, analyzer_code FROM Analyzer WHERE analyzer_output = 'output2'", mydb)
-
+## df = pd.read_sql("SELECT analyzer_name, analyzer_code FROM Analyzer WHERE analyzer_output = 'output2'", mydb)
+df = pd.read_sql("SELECT * FROM Analyzer ", mydb)
 
 # Array of table attributes 
 tableCols=['Mean','SD','CV','MU measurments','EWMA',"CUSUM","Target Mean",'Actual Mean',"Target SD","Actual SD"]
-# tableCols = [df.analyzer_name[0],df.analyzer_name[1], df.analyzer_name[2]]
+## tableCols = [df.analyzer_name[0],df.analyzer_name[1], df.analyzer_name[2]]
 
 # Array of table values
 tableValues=[1,2,3,4,5,6,7,8,9,10]
@@ -107,8 +107,7 @@ Analyzer_control = dbc.Card(
             dcc.Dropdown(
                 id='Analyzer_Code',
                 options=[
-                    {"label": col, "value": col}for col in iris.columns],
-                value="Analyzer_code",
+                    {'label':name, 'value':name} for name in df.analyzer_code],
                 multi=True,
                 placeholder = 'Select Analyzer Code'
             ),
@@ -137,9 +136,6 @@ Test_control = dbc.Card(
                 dbc.Label('Test'),
                 dcc.Dropdown(
                     id='Test_Code', 
-                    options=[
-                        {"label": col, "value": col}for col in iris.columns],
-                    value="Test_code",
                     multi=True,
                     placeholder = 'Select Test Code'
                 ),
@@ -361,6 +357,25 @@ def update_output(start_date, end_date):
         return 'Select a date to see it displayed here'
     else:
         return string_prefix
+
+
+@app.callback(
+    Output('Test_Code', 'options'),
+    Input('Analyzer_Code', 'value')
+)
+def update_date_dropdown(name): 
+    arr = []
+    for i in name:
+        id = i
+        sql = "SELECT test_code FROM analyzer_test WHERE analyzer_code = %s"
+        value = (id,)
+        mycursor.execute(sql, value)
+        myresult = mycursor.fetchone()
+        arr.append(int(myresult[0]))
+    return [{'label': j, 'value': j} for j in arr]
+
+
+
 
 
 
