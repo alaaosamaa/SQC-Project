@@ -26,7 +26,7 @@ n2 = len(sample2)
 # calculate pooled standard deviation 
 pooled_standard_deviation = math.sqrt(((n1 - 1)*SD1 * SD1 +(n2-1)*SD2 * SD2) / (n1 + n2-2))
 
-# Calculate Coefficient of Variation for each sample
+# Calculate Coefficient of Variation for data array
 cv = (SD1/Mean1)*100
 
 # Calculate the Exponentially weighted moving average (EWMA)
