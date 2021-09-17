@@ -52,7 +52,9 @@ Sample2 = np.random.randint(11, 17, size=100)
 # Array of table attributes
 # tableCols = ['Mean', 'SD', 'CV', 'MU measurments', 'EWMA',
 #              'CUSUM', 'Target Mean', 'Actual Mean', 'Target SD', 'Actual SD']
-tableCols = ['Mean', 'SD', 'CV', 'EWMA']
+# tableCols = ['Mean', 'SD', 'CV', 'EWMA']
+tableCols = ['Target Mean', 'Actual Mean', 'Target SD', 'Actual SD']
+
 # tableCols = [df.analyzer_name[0],df.analyzer_name[1], df.analyzer_name[2]]
 
 # Array of table values
@@ -286,7 +288,15 @@ Calculations = dbc.Card(
         dbc.Label(html.H4("Calculations", className="ml-2",
                           style={'font-weight': 'bold', 'color': '#caccce', })),
         dbc.Col(space),
-        dbc.Table(id = 'Calcs_Table')
+        dbc.Col(space),
+        dbc.Card([
+            dbc.Table(id = 'Calcs_Table',borderless=False,striped=True,responsive=True)
+        ],
+        body = True,
+        className = cardShadow[0],
+         style = {'width':'50%'}
+        ),
+        
         # dbc.Table(html.Tbody(id = 'Calcs_Table'), bordered=True, striped=True, responsive=True,
         #           style={"text-align": "center"}
         #           )
