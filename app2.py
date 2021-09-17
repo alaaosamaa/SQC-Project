@@ -42,7 +42,9 @@ mycursor = mydb.cursor()
 # Read data
 iris_raw = datasets.load_iris()
 iris = pd.DataFrame(iris_raw["data"], columns=iris_raw["feature_names"])
-# df = pd.read_sql("SELECT analyzer_name, analyzer_code FROM Analyzer WHERE analyzer_output = 'output2'", mydb)
+## df = pd.read_sql("SELECT analyzer_name, analyzer_code FROM Analyzer WHERE analyzer_output = 'output2'", mydb)
+df = pd.read_sql("SELECT * FROM Analyzer ", mydb)
+
 
 # Create random data
 Sample1 = np.random.randint(15, 20, size=100)
@@ -169,25 +171,24 @@ Analyzer_control = dbc.Card(
     [
         dbc.FormGroup(
             [
-                dbc.Label('Analyzer'),
-                dbc.Col(space),
-                dcc.Dropdown(
-                    id='Analyzer_Code',
-                    options=[
-                        {"label": col, "value": col}for col in iris.columns],
-                    value="Analyzer_code",
-                    multi=True,
-                    placeholder='Select Analyzer Code'
-                ),
-                dbc.Col(space),
-                dcc.Dropdown(
-                    id='Analyzer_Name',
-                    options=[
-                        {"label": col, "value": col}for col in iris.columns],
-                    value="Analyzer_Name",
-                    multi=True,
-                    placeholder='Select Analyzer Name'
-                ),
+            dbc.Label('Analyzer'),
+            dbc.Col(space),
+            dcc.Dropdown(
+                id='Analyzer_Code',
+                options=[
+                    {'label':name, 'value':name} for name in df.analyzer_code],
+                multi=True,
+                placeholder = 'Select Analyzer Code'
+            ),
+            dbc.Col(space),
+            dcc.Dropdown(
+                id='Analyzer_Name',
+                options=[
+                    {"label": col, "value": col}for col in iris.columns],
+                value="Analyzer_Name",
+                multi=True,
+                placeholder = 'Select Analyzer Name'
+            ),
             ],
         ),
     ],
@@ -203,10 +204,7 @@ Test_control = dbc.Card(
             [
                 dbc.Label('Test'),
                 dcc.Dropdown(
-                    id='Test_Code',
-                    options=[
-                        {"label": col, "value": col}for col in iris.columns],
-                    value="Test_code",
+                    id='Test_Code', 
                     multi=True,
                     placeholder='Select Test Code'
                 ),
@@ -450,6 +448,26 @@ def update_output(start_date, end_date):
         return 'Select a date to see it displayed here'
     else:
         return string_prefix
+
+
+@app.callback(
+    Output('Test_Code', 'options'),
+    Input('Analyzer_Code', 'value')
+)
+def update_date_dropdown(name): 
+    arr = []
+    for i in name:
+        id = i
+        sql = "SELECT test_code FROM analyzer_test WHERE analyzer_code = %s"
+        value = (id,)
+        mycursor.execute(sql, value)
+        myresult = mycursor.fetchone()
+        arr.append(int(myresult[0]))
+    return [{'label': j, 'value': j} for j in arr]
+
+
+
+
 
 # Calculate Button Function
 @app.callback(Output('Calcs_Table', 'children'),
