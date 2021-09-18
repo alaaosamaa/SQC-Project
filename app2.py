@@ -30,6 +30,7 @@ import pandas
 from uncertainties import ufloat
 
 
+
 mydb = mysql.connector.connect(
     host="localhost",
     user="root",
@@ -47,26 +48,33 @@ df = pd.read_sql("SELECT * FROM Analyzer ", mydb)
 
 
 # Create random data
-Sample1 = np.random.randint(15, 20, size=100)
-Sample2 = np.random.randint(11, 17, size=100)
+Sample1 = np.random.randint(15, 20, size=112)
+Sample2 = np.random.randint(11, 17, size=112)
 
 
 # Array of table attributes
 # tableCols = ['Mean', 'SD', 'CV', 'MU measurments', 'EWMA',
 #              'CUSUM', 'Target Mean', 'Actual Mean', 'Target SD', 'Actual SD']
-# tableCols = ['Mean', 'SD', 'CV', 'EWMA']
-tableCols = ['Target Mean', 'Actual Mean', 'Target SD', 'Actual SD']
-
+Mean_Table_cols = ['Assigned Mean', 'Assigned SD','Caculated Mean',  'Calculated SD']
 # tableCols = [df.analyzer_name[0],df.analyzer_name[1], df.analyzer_name[2]]
 
 # Array of table values
-tableValues = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+Mean_Table_values = [16.9,0,2,0]
+
 
 # Array of table rows
-tableRows = [
-    html.Tr([html.Td(i) for i in tableCols]), html.Tr(
-        [html.Td(i) for i in tableValues])
+Mean_Table_Data = [
+    html.Tr([html.Td(Mean_Table_cols[0]),html.Td(Mean_Table_values[0]),html.Td(Mean_Table_cols[1]),html.Td(Mean_Table_values[1])]), 
+    html.Tr([html.Td(Mean_Table_cols[2]),html.Td(Mean_Table_values[2]),html.Td(Mean_Table_cols[3]),html.Td(Mean_Table_values[3])])
 ]
+
+# function that updates table data
+def Updata_MEAN_Table_Data(tableValuesArray):
+    Table_Data = [
+    html.Tr([html.Td(Mean_Table_cols[0]),html.Td(Mean_Table_values[0]),html.Td(Mean_Table_cols[1]),html.Td(tableValuesArray[1])]), 
+    html.Tr([html.Td(Mean_Table_cols[2]),html.Td(Mean_Table_values[2]),html.Td(Mean_Table_cols[3]),html.Td(tableValuesArray[3])])
+    ]    
+    return Table_Data
 
 # Main Application page
 app = dash.Dash('Hello World', external_stylesheets=[
@@ -108,8 +116,8 @@ def Data_MU(dataArray):
 
 # Compute the Calculate the Exponentially weighted moving average (EWMA)
 def Data_EWMA(dataArray):
-#   EWMA = pd.DataFrame.ewm(dataArray)
-  return 1
+  EWMA = pd.DataFrame(dataArray).ewm
+  return EWMA
 
 # Calculate Cumulative Sum of data array (CUSUM)
 def Data_CUSUM(dataArray):
@@ -122,9 +130,9 @@ def Calculate_All(dataArray):
    dataArray_Mean = Data_Mean(dataArray)
    dataArray_SD = Data_SD(dataArray)
    dataArray_CV = Data_CV(dataArray)
-#    dataArray_MU = Data_MU(dataArray)
+   dataArray_MU = Data_MU(dataArray)
    dataArray_EWMA = Data_EWMA(dataArray)
-#    dataArray_CUSUM = Data_CUSUM(dataArray)
+   dataArray_CUSUM = Data_CUSUM(dataArray)
    Calculations_Array = [dataArray_Mean, dataArray_SD, dataArray_CV, dataArray_EWMA]
    return Calculations_Array
 
@@ -287,26 +295,23 @@ Calculations = dbc.Card(
                           style={'font-weight': 'bold', 'color': '#caccce', })),
         dbc.Col(space),
         dbc.Col(space),
-        dbc.Card([
-            dbc.Table(id = 'Calcs_Table',borderless=False,striped=True,responsive=True)
-        ],
-        body = True,
-        className = cardShadow[0],
-         style = {'width':'50%'}
-        ),
-        
-        # dbc.Table(html.Tbody(id = 'Calcs_Table'), bordered=True, striped=True, responsive=True,
-        #           style={"text-align": "center"}
-        #           )
-        # dash_table.DataTable(
-        #     id = "Calcs_Table",
-        #     columns = (
-        #     [{'id': c, 'name': c} for c in tableCols]
-        #     ),
-        #     # data = [{v for v in tableValues}],
-            
-        # )
-        # 
+        dbc.Row([
+            dbc.Col([
+                dbc.Table(html.Tbody(Mean_Table_Data),id = 'Calcs_Table',bordered = True,responsive = True
+                , 
+                loading_state = {"outline":True} ,
+                style = {'font-size':'small'}
+                )   
+                ],
+            md=4)
+            ,
+            # dbc.Col([
+                # dbc.Table(html.Tbody(Mean_Table_Data),bordered = True,responsive = True
+                # , style = {'font-size':'small'})   
+                # ], 
+            # md=4)
+            # ,
+        ]),    
     ],
     body=True,
     className=cardShadow[0],
@@ -390,7 +395,7 @@ app.layout = dbc.Container(
                             dbc.Col(space)
                         ],
                         body=True,
-                        # style={"overflowY": "scroll"}
+                        # style={'height': '90%',"overflowY": "scroll"}
                         # className = "shadow-sm p-3 mb-5 bg-white rounded"
                     )
                 ], md=4),
@@ -454,7 +459,9 @@ def update_output(start_date, end_date):
     Output('Test_Code', 'options'),
     Input('Analyzer_Code', 'value')
 )
-def update_date_dropdown(name): 
+def update_date_dropdown(name):
+    if name == None:
+        return [{'label': 'Choose Analyzer First', 'value': 0}]
     arr = []
     for i in name:
         id = i
@@ -473,14 +480,18 @@ def update_date_dropdown(name):
 @app.callback(Output('Calcs_Table', 'children'),
               Input('Plot_Button', 'n_clicks'))
 def Calculate(n_clicks):
-    table_Rows=[]
+    MeanTableData=[]
+    Calculations_data= []
+
+    if n_clicks == 0:
+        MeanTableData = Mean_Table_Data    
+        return html.Tbody(MeanTableData)
     if n_clicks > 0 :
-        table_Values = Calculate_All(Sample1)
-        table_Rows = [
-        html.Tr([html.Td(i) for i in tableCols]), html.Tr(
-        [html.Td(i) for i in table_Values])
-        ]
-    return html.Tbody(table_Rows)
+        Calculations_data = Calculate_All(Sample1)
+        Table_calculated_values = [Calculations_data[i] for i in range(0,len(Calculations_data)//2)]
+        Mean_Table_values[1],Mean_Table_values[3] = Table_calculated_values[0],Table_calculated_values[1]
+        MeanTableData = Updata_MEAN_Table_Data(Mean_Table_values)
+    return html.Tbody(MeanTableData)
 
 if __name__ == '__main__':
     app.run_server(debug=True)
