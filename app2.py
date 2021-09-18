@@ -12,6 +12,7 @@ import dash_html_components as html
 import csv
 from datetime import date
 import dash_table
+from numpy.core.fromnumeric import size
 import pandas as pd
 from datetime import datetime as dt
 import plotly.express as px
@@ -55,26 +56,38 @@ Sample2 = np.random.randint(11, 17, size=112)
 # Array of table attributes
 # tableCols = ['Mean', 'SD', 'CV', 'MU measurments', 'EWMA',
 #              'CUSUM', 'Target Mean', 'Actual Mean', 'Target SD', 'Actual SD']
-Mean_Table_cols = ['Assigned Mean', 'Assigned SD','Caculated Mean',  'Calculated SD']
+Mean_Table_cols = ['Assigned Mean','Caculated Mean', 'Assigned SD',  'Calculated SD']
+CV_Table_cols = ['CV %', 'MU Measurments']
 # tableCols = [df.analyzer_name[0],df.analyzer_name[1], df.analyzer_name[2]]
 
 # Array of table values
 Mean_Table_values = [16.9,0,2,0]
+CV_Table_values = [0,0]
 
 
 # Array of table rows
 Mean_Table_Data = [
-    html.Tr([html.Td(Mean_Table_cols[0]),html.Td(Mean_Table_values[0]),html.Td(Mean_Table_cols[1]),html.Td(Mean_Table_values[1])]), 
-    html.Tr([html.Td(Mean_Table_cols[2]),html.Td(Mean_Table_values[2]),html.Td(Mean_Table_cols[3]),html.Td(Mean_Table_values[3])])
+    html.Tr([html.Td(Mean_Table_cols[0],className="table-active"),html.Td(Mean_Table_values[0]),html.Td(Mean_Table_cols[1],className="table-active"),html.Td(Mean_Table_values[1])]), 
+    html.Tr([html.Td(Mean_Table_cols[2],className="table-active"),html.Td(Mean_Table_values[2]),html.Td(Mean_Table_cols[3],className="table-active"),html.Td(Mean_Table_values[3])])
+]
+CV_Table_Data = [
+    html.Tr([html.Td(CV_Table_cols[0],className="table-active"),html.Td(CV_Table_values[0])]), 
+    html.Tr([html.Td(CV_Table_cols[1],className="table-active"),html.Td(CV_Table_values[1])])
 ]
 
+
+
 # function that updates table data
-def Updata_MEAN_Table_Data(tableValuesArray):
-    Table_Data = [
-    html.Tr([html.Td(Mean_Table_cols[0]),html.Td(Mean_Table_values[0]),html.Td(Mean_Table_cols[1]),html.Td(tableValuesArray[1])]), 
-    html.Tr([html.Td(Mean_Table_cols[2]),html.Td(Mean_Table_values[2]),html.Td(Mean_Table_cols[3]),html.Td(tableValuesArray[3])])
-    ]    
-    return Table_Data
+def Updata_MEAN_Table_Data(MeanTableValuesArray,CVTableValuesArray):
+    Mean_Table_Data = [
+    html.Tr([html.Td(Mean_Table_cols[0],className="table-active"),html.Td(Mean_Table_values[0]),html.Td(Mean_Table_cols[1],className="table-active"),html.Td(MeanTableValuesArray[1])]), 
+    html.Tr([html.Td(Mean_Table_cols[2],className="table-active"),html.Td(Mean_Table_values[2]),html.Td(Mean_Table_cols[3],className="table-active"),html.Td(MeanTableValuesArray[3])])
+    ]
+    CV_Table_Data = [
+    html.Tr([html.Td(CV_Table_cols[0],className="table-active"),html.Td(CVTableValuesArray[0])]), 
+    html.Tr([html.Td(CV_Table_cols[1],className="table-active"),html.Td(CVTableValuesArray[1])])
+]    
+    return Mean_Table_Data,CV_Table_Data
 
 # Main Application page
 app = dash.Dash('Hello World', external_stylesheets=[
@@ -111,8 +124,8 @@ def Data_CV(dataArray):
 
 # Calculate Measurments Uncertainty (MU)
 def Data_MU(dataArray):
-    dataArray_Mean = Data_Mean(dataArray)
-    return ufloat(dataArray_Mean,0.01)
+    dataArray_MU = Data_Mean(dataArray)
+    return str(ufloat(dataArray_MU,0.01))
 
 # Compute the Calculate the Exponentially weighted moving average (EWMA)
 def Data_EWMA(dataArray):
@@ -133,7 +146,7 @@ def Calculate_All(dataArray):
    dataArray_MU = Data_MU(dataArray)
    dataArray_EWMA = Data_EWMA(dataArray)
    dataArray_CUSUM = Data_CUSUM(dataArray)
-   Calculations_Array = [dataArray_Mean, dataArray_SD, dataArray_CV, dataArray_EWMA]
+   Calculations_Array = [dataArray_Mean, dataArray_SD, dataArray_CV, dataArray_MU]
    return Calculations_Array
 
 
@@ -297,20 +310,20 @@ Calculations = dbc.Card(
         dbc.Col(space),
         dbc.Row([
             dbc.Col([
-                dbc.Table(html.Tbody(Mean_Table_Data),id = 'Calcs_Table',bordered = True,responsive = True
-                , 
-                loading_state = {"outline":True} ,
-                style = {'font-size':'small'}
+                dbc.Table(html.Tbody(Mean_Table_Data),id = 'Mean_Table',bordered = True,responsive = True, 
+                size = 'sm',
+                style = {'font-size':'small','text-align': 'center'}
                 )   
                 ],
-            md=4)
+            md=5)
             ,
-            # dbc.Col([
-                # dbc.Table(html.Tbody(Mean_Table_Data),bordered = True,responsive = True
-                # , style = {'font-size':'small'})   
-                # ], 
-            # md=4)
-            # ,
+            dbc.Col([
+                dbc.Table(html.Tbody(CV_Table_Data),id = 'CV_Table',bordered = True,responsive = True,
+                size = 'sm', 
+                style = {'font-size':'small'})   
+                ], 
+            md=3)
+            ,
         ]),    
     ],
     body=True,
@@ -477,21 +490,26 @@ def update_date_dropdown(name):
 
 
 # Calculate Button Function
-@app.callback(Output('Calcs_Table', 'children'),
-              Input('Plot_Button', 'n_clicks'))
+@app.callback(Output('Mean_Table', 'children'),
+            Output('CV_Table', 'children'),
+            Input('Plot_Button', 'n_clicks'))
 def Calculate(n_clicks):
     MeanTableData=[]
+    CvTableData=[]
     Calculations_data= []
 
     if n_clicks == 0:
-        MeanTableData = Mean_Table_Data    
-        return html.Tbody(MeanTableData)
+        MeanTableData = Mean_Table_Data
+        CvTableData = CV_Table_Data
+
+        return html.Tbody(MeanTableData),html.Tbody(CvTableData)
     if n_clicks > 0 :
         Calculations_data = Calculate_All(Sample1)
-        Table_calculated_values = [Calculations_data[i] for i in range(0,len(Calculations_data)//2)]
-        Mean_Table_values[1],Mean_Table_values[3] = Table_calculated_values[0],Table_calculated_values[1]
-        MeanTableData = Updata_MEAN_Table_Data(Mean_Table_values)
-    return html.Tbody(MeanTableData)
+        Mean_Table_values[1],Mean_Table_values[3] = Calculations_data[0],Calculations_data[1]
+        CV_Table_values[0],CV_Table_values[1] = Calculations_data[2],Calculations_data[3]
+        MeanTableData,CvTableData = Updata_MEAN_Table_Data(Mean_Table_values,CV_Table_values)
+   
+    return html.Tbody(MeanTableData),html.Tbody(CvTableData)
 
 if __name__ == '__main__':
     app.run_server(debug=True)
