@@ -184,7 +184,7 @@ Analyzer_control = dbc.Card(
             dcc.Dropdown(
                 id='Analyzer_Code',
                 options=[
-                    {'label':name, 'value':name} for name in df.analyzer_code],
+                    {'label':name, 'value':name} for name in df.analyzer_id],
                 multi=True,
                 placeholder = 'Select Analyzer Code'
             ),
@@ -465,7 +465,7 @@ def update_date_dropdown(name):
     arr = []
     for i in name:
         id = i
-        sql = "SELECT test_code FROM analyzer_test WHERE analyzer_code = %s"
+        sql = "SELECT test_code FROM test_analyzer WHERE analyzer_id = %s"
         value = (id,)
         mycursor.execute(sql, value)
         myresult = mycursor.fetchone()
