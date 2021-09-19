@@ -205,7 +205,7 @@ Analyzer_control = dbc.Card(
             dcc.Dropdown(
                 id='Analyzer_Name',
                 options=[
-                    {"label": col, "value": col}for col in iris.columns],
+                    {'label':name, 'value':name} for name in df.analyzer_name],
                 value="Analyzer_Name",
                 multi=True,
                 placeholder = 'Select Analyzer Name'
@@ -227,7 +227,8 @@ Test_control = dbc.Card(
                 dcc.Dropdown(
                     id='Test_Code', 
                     multi=True,
-                    placeholder='Select Test Code'
+                    placeholder='Select Test Code',
+                    disabled = True
                 ),
                 dbc.Col(space),
                 dcc.Dropdown(
@@ -236,7 +237,8 @@ Test_control = dbc.Card(
                         {"label": col, "value": col}for col in iris.columns],
                     value="Test_Name",
                     multi=True,
-                    placeholder='Select Test Name'
+                    placeholder='Select Test Name',
+                    disabled = True
                 ),
                 dbc.Col(space),
                 dcc.Dropdown(
@@ -320,9 +322,9 @@ Calculations = dbc.Card(
             dbc.Col([
                 dbc.Table(html.Tbody(CV_Table_Data),id = 'CV_Table',bordered = True,responsive = True,
                 size = 'sm', 
-                style = {'font-size':'small'})   
-                ], 
-            md=3)
+                style = {'font-size':'small','text-align': 'center'}
+                )], 
+            md=4)
             ,
         ]),    
     ],
@@ -470,20 +472,36 @@ def update_output(start_date, end_date):
 
 @app.callback(
     Output('Test_Code', 'options'),
-    Input('Analyzer_Code', 'value')
+    Output('Test_Code', 'disabled'),
+    Output('Test_Name', 'options'),
+    Output('Test_Name', 'disabled'),
+    Input('Analyzer_Code', 'value'),
+    prevent_initial_callbacks=True
 )
 def update_date_dropdown(name):
     if name == None:
-        return [{'label': 'Choose Analyzer First', 'value': 0}]
-    arr = []
+        return [{'label': 'Choose Analyzer First', 'value': 0}],True,[{'label': 'Choose Analyzer First', 'value': 0}],True
+    test_code_arr = []
+    test_name_arr = []
+
+    # Select test code depending on analyzer code
     for i in name:
         id = i
-        sql = "SELECT test_code FROM test_analyzer WHERE analyzer_id = %s"
+        test_code_sql = "SELECT test_code FROM test_analyzer WHERE analyzer_id = %s"
         value = (id,)
-        mycursor.execute(sql, value)
+        mycursor.execute(test_code_sql, value)
         myresult = mycursor.fetchone()
-        arr.append(int(myresult[0]))
-    return [{'label': j, 'value': j} for j in arr]
+        test_code_arr.append(int(myresult[0]))
+    
+    # Select test name depending on analyzer code
+    for i in test_code_arr:
+        test_name_sql = "SELECT test_name FROM Test WHERE test_code = %s"
+        value = (i,)
+        mycursor.execute(test_name_sql, value)
+        myresult = mycursor.fetchone()
+        test_name_arr.append(myresult[0])
+
+    return [{'label': j, 'value': j} for j in test_code_arr], False,[{'label': j, 'value': j} for j in test_name_arr], False
 
 
 
