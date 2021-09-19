@@ -492,13 +492,22 @@ def update_test_dropdown_options(key, var):
     Output('Reagent_Num', 'options'),
     Output('Reagent_Num', 'disabled'),
     Input('Analyzer_Code', 'value'),
+    Input('Analyzer_Name', 'value'),
     prevent_initial_callbacks = True
 )
-def update_test_dropdowns(name):
+def update_test_dropdowns(code,name):
+    ctx = dash.callback_context
+    input_id = ctx.triggered[0]["prop_id"].split(".")[0]
+    print(input_id)
+    if input_id == "Analyzer_Code":
+        update_test_dropdown_options(1, code)
+    elif input_id == "Analyzer_Name":
+        update_test_dropdown_options(2, name)
+
     if name == None:
         return [{'label': 'Choose Analyzer First', 'value': 0}], True, [{'label': 'Choose Analyzer First', 'value': 0}], True, [{'label': j, 'value': j} for j in reagents_arr], True
-    update_test_dropdown_options(1, name)
-    return [{'label': j, 'value': j} for j in test_code_arr], False,[{'label': j, 'value': j} for j in test_name_arr], False, [{'label': j, 'value': j} for j in reagents_arr], False
+    else:
+        return [{'label': j, 'value': j} for j in test_code_arr], False,[{'label': j, 'value': j} for j in test_name_arr], False, [{'label': j, 'value': j} for j in reagents_arr], False
 
 
 
