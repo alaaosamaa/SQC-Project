@@ -15,7 +15,7 @@ mydb = mysql.connector.connect(
     passwd="mysql",
     database="SQC"
 )
-mycursor = mydb.cursor() 
+mycursor = mydb.cursor()
 
 mycursor.execute(
     "CREATE TABLE IF NOT EXISTS Analyzer (analyzer_id INT NOT NULL, analyzer_name VARCHAR(255), anlyzer_manufacturer VARCHAR(255), analyzer_model VARCHAR(255), analyzer_branch VARCHAR(255), analyzer_lab_unit VARCHAR(255),PRIMARY KEY(analyzer_id), UNIQUE(analyzer_model))")
@@ -37,6 +37,7 @@ mycursor.execute(
 
 mycursor.execute(
     "CREATE TABLE IF NOT EXISTS Calculated_Parameters (ids INT NOT NULL, no_of_points INT, mu INT, ewma INT, cusum INT, PRIMARY KEY(ids))")
+
 
 
 mycursor.execute("SHOW TABLES")
