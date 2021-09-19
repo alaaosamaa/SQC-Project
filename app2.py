@@ -233,8 +233,6 @@ Test_control = dbc.Card(
                 dbc.Col(space),
                 dcc.Dropdown(
                     id='Test_Name',
-                    options=[
-                        {"label": col, "value": col}for col in iris.columns],
                     value="Test_Name",
                     multi=True,
                     placeholder='Select Test Name',
@@ -242,12 +240,11 @@ Test_control = dbc.Card(
                 ),
                 dbc.Col(space),
                 dcc.Dropdown(
-                    id='CH_Num',
-                    options=[
-                        {"label": col, "value": col}for col in iris.columns],
-                    value="CH_LOT",
+                    id='Reagent_Num',
+                    value="Reagent_Num",
                     multi=True,
-                    placeholder='Select Reagent Ot Number'
+                    placeholder='Select Reagent Lot Number',
+                    disabled = True
                 ),
             ],
         )
@@ -470,39 +467,38 @@ def update_output(start_date, end_date):
         return string_prefix
 
 
+test_code_arr = []
+test_name_arr = []
+reagents_arr = []
+
+def update_test_dropdown_options(key, var):
+    for i in var:
+        if key == 1:
+            mycursor.execute("SELECT test_code, test_name, reagent_lot_number FROM test_analyzer JOIN Test ON test_code = t_code JOIN Analyzer ON analyzer_id = a_id JOIN Reagents ON reagent_lot_number = r_lot_number WHERE analyzer_id =  %s", (i,))
+        elif key == 2:
+            mycursor.execute("SELECT test_code, test_name, reagent_lot_number FROM test_analyzer JOIN Test ON test_code = t_code JOIN Analyzer ON analyzer_id = a_id JOIN Reagents ON reagent_lot_number = r_lot_number WHERE analyzer_name =  %s", (i,))
+        myresult = mycursor.fetchone()
+        test_code_arr.append(int(myresult[0]))
+        test_name_arr.append(myresult[1])
+        reagents_arr.append(myresult[2])
+
+
+
 @app.callback(
     Output('Test_Code', 'options'),
     Output('Test_Code', 'disabled'),
     Output('Test_Name', 'options'),
     Output('Test_Name', 'disabled'),
+    Output('Reagent_Num', 'options'),
+    Output('Reagent_Num', 'disabled'),
     Input('Analyzer_Code', 'value'),
-    prevent_initial_callbacks=True
+    prevent_initial_callbacks = True
 )
-def update_date_dropdown(name):
+def update_test_dropdowns(name):
     if name == None:
-        return [{'label': 'Choose Analyzer First', 'value': 0}],True,[{'label': 'Choose Analyzer First', 'value': 0}],True
-    test_code_arr = []
-    test_name_arr = []
-
-    # Select test code depending on analyzer code
-    for i in name:
-        id = i
-        test_code_sql = "SELECT test_code FROM test_analyzer WHERE analyzer_id = %s"
-        value = (id,)
-        mycursor.execute(test_code_sql, value)
-        myresult = mycursor.fetchone()
-        test_code_arr.append(int(myresult[0]))
-    
-    # Select test name depending on analyzer code
-    for i in test_code_arr:
-        test_name_sql = "SELECT test_name FROM Test WHERE test_code = %s"
-        value = (i,)
-        mycursor.execute(test_name_sql, value)
-        myresult = mycursor.fetchone()
-        test_name_arr.append(myresult[0])
-
-    return [{'label': j, 'value': j} for j in test_code_arr], False,[{'label': j, 'value': j} for j in test_name_arr], False
-
+        return [{'label': 'Choose Analyzer First', 'value': 0}], True, [{'label': 'Choose Analyzer First', 'value': 0}], True, [{'label': j, 'value': j} for j in reagents_arr], True
+    update_test_dropdown_options(1, name)
+    return [{'label': j, 'value': j} for j in test_code_arr], False,[{'label': j, 'value': j} for j in test_name_arr], False, [{'label': j, 'value': j} for j in reagents_arr], False
 
 
 
