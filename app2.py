@@ -78,7 +78,7 @@ CV_Table_Data = [
 
 
 # function that updates table data
-def Updata_MEAN_Table_Data(MeanTableValuesArray,CVTableValuesArray):
+def Updata_Calcs_Table_Data(MeanTableValuesArray,CVTableValuesArray):
     Mean_Table_Data = [
     html.Tr([html.Td(Mean_Table_cols[0],className="table-active"),html.Td(Mean_Table_values[0]),html.Td(Mean_Table_cols[1],className="table-active"),html.Td(MeanTableValuesArray[1])]), 
     html.Tr([html.Td(Mean_Table_cols[2],className="table-active"),html.Td(Mean_Table_values[2]),html.Td(Mean_Table_cols[3],className="table-active"),html.Td(MeanTableValuesArray[3])])
@@ -467,21 +467,21 @@ def update_output(start_date, end_date):
         return string_prefix
 
 
-test_code_arr = []
-test_name_arr = []
-reagents_arr = []
 
 def update_test_dropdown_options(key, var):
+    test_code_opt = []
+    test_name_opt = []
+    reagents_opt = []
     for i in var:
         if key == 1:
             mycursor.execute("SELECT test_code, test_name, reagent_lot_number FROM test_analyzer JOIN Test ON test_code = t_code JOIN Analyzer ON analyzer_id = a_id JOIN Reagents ON reagent_lot_number = r_lot_number WHERE analyzer_id =  %s", (i,))
         elif key == 2:
             mycursor.execute("SELECT test_code, test_name, reagent_lot_number FROM test_analyzer JOIN Test ON test_code = t_code JOIN Analyzer ON analyzer_id = a_id JOIN Reagents ON reagent_lot_number = r_lot_number WHERE analyzer_name =  %s", (i,))
         myresult = mycursor.fetchone()
-        test_code_arr.append(int(myresult[0]))
-        test_name_arr.append(myresult[1])
-        reagents_arr.append(myresult[2])
-
+        test_code_opt.append(int(myresult[0]))
+        test_name_opt.append(myresult[1])
+        reagents_opt.append(myresult[2])
+    return test_code_opt, test_name_opt, reagents_opt
 
 
 @app.callback(
@@ -496,18 +496,25 @@ def update_test_dropdown_options(key, var):
     prevent_initial_callbacks = True
 )
 def update_test_dropdowns(code,name):
+    test_code_arr = []
+    test_name_arr = []
+    reagents_arr = []
     ctx = dash.callback_context
     input_id = ctx.triggered[0]["prop_id"].split(".")[0]
     print(input_id)
     if input_id == "Analyzer_Code":
-        update_test_dropdown_options(1, code)
+        # name = None
+        test_code_arr, test_name_arr, reagents_arr = update_test_dropdown_options(1, code)
     elif input_id == "Analyzer_Name":
-        update_test_dropdown_options(2, name)
+        # code = None
+        test_code_arr, test_name_arr, reagents_arr = update_test_dropdown_options(2, name)
 
-    if name == None:
-        return [{'label': 'Choose Analyzer First', 'value': 0}], True, [{'label': 'Choose Analyzer First', 'value': 0}], True, [{'label': j, 'value': j} for j in reagents_arr], True
-    else:
-        return [{'label': j, 'value': j} for j in test_code_arr], False,[{'label': j, 'value': j} for j in test_name_arr], False, [{'label': j, 'value': j} for j in reagents_arr], False
+    if code == None:
+        return [{'label': 'Choose Analyzer First', 'value': 0}], True, [{'label': 'Choose Analyzer First', 'value': 0}], True, [{'label': 'Choose Analyzer First', 'value': 0}], True
+    elif name == None:
+         return [{'label': 'Choose Analyzer First', 'value': 0}], True, [{'label': 'Choose Analyzer First', 'value': 0}], True, [{'label': 'Choose Analyzer First', 'value': 0}], True
+    
+    return [{'label': j, 'value': j} for j in test_code_arr], False,[{'label': j, 'value': j} for j in test_name_arr], False, [{'label': j, 'value': j} for j in reagents_arr], False
 
 
 
@@ -530,7 +537,7 @@ def Calculate(n_clicks):
         Calculations_data = Calculate_All(Sample1)
         Mean_Table_values[1],Mean_Table_values[3] = Calculations_data[0],Calculations_data[1]
         CV_Table_values[0],CV_Table_values[1] = Calculations_data[2],Calculations_data[3]
-        MeanTableData,CvTableData = Updata_MEAN_Table_Data(Mean_Table_values,CV_Table_values)
+        MeanTableData,CvTableData = Updata_Calcs_Table_Data(Mean_Table_values,CV_Table_values)
    
     return html.Tbody(MeanTableData),html.Tbody(CvTableData)
 
