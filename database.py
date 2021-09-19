@@ -27,13 +27,13 @@ mycursor.execute(
     "CREATE TABLE IF NOT EXISTS Reagents (reagent_lot_number INT NOT NULL, reagent_name VARCHAR(255), reagent_manufacturer VARCHAR(255), reagent_expiry_date DATE, PRIMARY KEY(reagent_lot_number), UNIQUE(reagent_name))")
 
 mycursor.execute(
-    "CREATE TABLE IF NOT EXISTS test_analyzer (analyzer_id INT NOT NULL, test_code INT NOT NULL, reagent_lot_number INT NOT NULL, linear_range_from INT, linear_range_to INT, FOREIGN KEY (analyzer_id) REFERENCES Analyzer(analyzer_id), FOREIGN KEY (test_code) REFERENCES Test(test_code), FOREIGN KEY (reagent_lot_number) REFERENCES Reagents(reagent_lot_number))")
+    "CREATE TABLE IF NOT EXISTS test_analyzer (a_id INT NOT NULL, t_code INT NOT NULL, r_lot_number INT NOT NULL, linear_range_from INT, linear_range_to INT, FOREIGN KEY (a_id) REFERENCES Analyzer(analyzer_id), FOREIGN KEY (t_code) REFERENCES Test(test_code), FOREIGN KEY (r_lot_number) REFERENCES Reagents(reagent_lot_number))")
 
 mycursor.execute(
     "CREATE TABLE IF NOT EXISTS QC_Parameters (qc_lot_number INT NOT NULL, qc_name VARCHAR(255), qc_type VARCHAR(255), qc_level VARCHAR(255), qc_manufacturer VARCHAR(255), qc_speciality VARCHAR(255), qc_expiry_date DATE, PRIMARY KEY(qc_lot_number), UNIQUE(qc_name))")
 
 mycursor.execute(
-    "CREATE TABLE IF NOT EXISTS test_qc_results (test_code INT NOT NULL, analyzer_id INT NOT NULL, reagent_lot_number INT NOT NULL, qc_lot_number INT NOT NULL, qc_assigned_mean INT, qc_assigned_sd INT, qc_assigned_cv INT, qualitative_assigned INT, qc_result INT, qc_flag BOOLEAN, qc_date DATE, qc_calculated_mean INT, qc_calculated_sd INT, qc_calculated_cv INT, qc_overall_status VARCHAR(255), FOREIGN KEY (test_code) REFERENCES Test(test_code), FOREIGN KEY (analyzer_id) REFERENCES Analyzer(analyzer_id), FOREIGN KEY (reagent_lot_number) REFERENCES Reagents(reagent_lot_number), FOREIGN KEY (qc_lot_number) REFERENCES QC_Parameters(qc_lot_number))")
+    "CREATE TABLE IF NOT EXISTS test_qc_results (t_code INT NOT NULL, a_id INT NOT NULL, r_lot_number INT NOT NULL, q_c_lot_number INT NOT NULL, qc_assigned_mean INT, qc_assigned_sd INT, qc_assigned_cv INT, qualitative_assigned INT, qc_result INT, qc_flag BOOLEAN, qc_date DATE, qc_calculated_mean INT, qc_calculated_sd INT, qc_calculated_cv INT, qc_overall_status VARCHAR(255), FOREIGN KEY (t_code) REFERENCES Test(test_code), FOREIGN KEY (a_id) REFERENCES Analyzer(analyzer_id), FOREIGN KEY (r_lot_number) REFERENCES Reagents(reagent_lot_number), FOREIGN KEY (q_c_lot_number) REFERENCES QC_Parameters(qc_lot_number))")
 
 mycursor.execute(
     "CREATE TABLE IF NOT EXISTS Calculated_Parameters (ids INT NOT NULL, no_of_points INT, mu INT, ewma INT, cusum INT, PRIMARY KEY(ids))")
@@ -105,7 +105,7 @@ mydb.commit()
 
 # ###
 
-sql = "INSERT INTO test_analyzer (analyzer_id, test_code, reagent_lot_number) VALUES (%s, %s, %s)"
+sql = "INSERT INTO test_analyzer (a_id, t_code, r_lot_number) VALUES (%s, %s, %s)"
 val = [
     ('1001', '2001', '3001'),
     ('1002', '2002', '3002'),
