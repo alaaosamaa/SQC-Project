@@ -48,6 +48,8 @@ iris = pd.DataFrame(iris_raw["data"], columns=iris_raw["feature_names"])
 # Analyzer_df = pd.read_sql("SELECT * FROM Analyzer ", mydb)
 Lab_df = pd.read_sql("SELECT DISTINCT lab_branch FROM Lab ", mydb)
 QC_df = pd.read_sql("SELECT qc_lot_number,qc_name FROM QC_Parameters ", mydb)
+Plot_df = pd.read_sql("SELECT qc_assigned_mean,qc_assigned_sd,qc_result FROM test_qc_results ", mydb)
+print(Plot_df)
 
 
 # Create random data
@@ -255,6 +257,7 @@ Test_control = dbc.Card(
                     disabled = True,
                     placeholder='Select Test Name'
                 ),
+                
                 # dbc.Col(space),
                 # dcc.Dropdown(
                 #     id='Reagent_Num',
@@ -349,6 +352,8 @@ Calculations = dbc.Card(
 
 )
 
+# graph 
+fig = go.Figure(data=[go.Scatter(x=[1, 2, 3], y=[4, 1, 2]),go.Scatter(x=[1, 2, 3], y=[2,2,2])])
 
 # --------------------------------------------------------------Nav Bar---------------------------------------
 
@@ -436,7 +441,8 @@ app.layout = dbc.Container(
                     dbc.Col(Calculations),
                     dbc.Col(space),
                     dcc.Graph(id="cluster-graph",
-                              style={"margin-top": "-3em"}),
+                            figure=fig,
+                            style={"margin-top": "-3em"}),
 
                 ], md=8),
             ],
