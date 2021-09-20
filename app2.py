@@ -1,4 +1,4 @@
-from os import terminal_size
+from os import name, terminal_size
 import dash
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
@@ -44,8 +44,9 @@ mycursor = mydb.cursor()
 # Read data
 iris_raw = datasets.load_iris()
 iris = pd.DataFrame(iris_raw["data"], columns=iris_raw["feature_names"])
-## df = pd.read_sql("SELECT analyzer_name, analyzer_code FROM Analyzer WHERE analyzer_output = 'output2'", mydb)
-df = pd.read_sql("SELECT * FROM Analyzer ", mydb)
+## Analyzer_df = pd.read_sql("SELECT analyzer_name, analyzer_code FROM Analyzer WHERE analyzer_output = 'output2'", mydb)
+Analyzer_df = pd.read_sql("SELECT * FROM Analyzer ", mydb)
+QC_df = pd.read_sql("SELECT qc_lot_number,qc_name FROM QC_Parameters ", mydb)
 
 
 # Create random data
@@ -58,7 +59,7 @@ Sample2 = np.random.randint(11, 17, size=112)
 #              'CUSUM', 'Target Mean', 'Actual Mean', 'Target SD', 'Actual SD']
 Mean_Table_cols = ['Assigned Mean','Caculated Mean', 'Assigned SD',  'Calculated SD']
 CV_Table_cols = ['CV %', 'MU Measurments']
-# tableCols = [df.analyzer_name[0],df.analyzer_name[1], df.analyzer_name[2]]
+# tableCols = [Analyzer_df.analyzer_name[0],Analyzer_df.analyzer_name[1], Analyzer_df.analyzer_name[2]]
 
 # Array of table values
 Mean_Table_values = [16.9,0,2,0]
@@ -110,7 +111,7 @@ def Data_SD(dataArray):
 
 
 # calculate pooled standard deviation (SD)
-def Booled_SD(dataArray1,dataArray2):
+def Pooled_SD(dataArray1,dataArray2):
     n1, n2 = len(dataArray1),len(dataArray2)
     dataArray1_SD, dataArray2_SD = Data_SD(dataArray1) ,Data_SD(dataArray2)
     pooled_standard_deviation = math.sqrt(((n1 - 1)*dataArray1_SD * dataArray1_SD +(n2-1)*dataArray2_SD * dataArray2_SD) / (n1 + n2-2))
@@ -193,21 +194,20 @@ Analyzer_control = dbc.Card(
         dbc.FormGroup(
             [
             dbc.Label('Analyzer'),
-            dbc.Col(space),
-            dcc.Dropdown(
-                id='Analyzer_Code',
-                options=[
-                    {'label':name, 'value':name} for name in df.analyzer_id],
-                multi=True,
-                placeholder = 'Select Analyzer Code'
-            ),
+            # dbc.Col(space),
+            # dcc.Dropdown(
+            #     id='Analyzer_Code',
+            #     options=[
+            #         {'label':name, 'value':name} for name in Analyzer_df.analyzer_id],
+            #     multi=True,
+            #     placeholder = 'Select Analyzer Code'
+            # ),
             dbc.Col(space),
             dcc.Dropdown(
                 id='Analyzer_Name',
                 options=[
-                    {'label':name, 'value':name} for name in df.analyzer_name],
+                    {'label':name, 'value':name} for name in Analyzer_df.analyzer_name],
                 value="Analyzer_Name",
-                multi=True,
                 placeholder = 'Select Analyzer Name'
             ),
             ],
@@ -224,28 +224,27 @@ Test_control = dbc.Card(
         dbc.FormGroup(
             [
                 dbc.Label('Test'),
-                dcc.Dropdown(
-                    id='Test_Code', 
-                    multi=True,
-                    placeholder='Select Test Code',
-                    disabled = True
-                ),
-                dbc.Col(space),
+                # dcc.Dropdown(
+                #     id='Test_Code', 
+                #     multi=True,
+                #     placeholder='Select Test Code',
+                #     disabled = True
+                # ),
+                # dbc.Col(space),
                 dcc.Dropdown(
                     id='Test_Name',
                     value="Test_Name",
-                    multi=True,
                     placeholder='Select Test Name',
                     disabled = True
                 ),
-                dbc.Col(space),
-                dcc.Dropdown(
-                    id='Reagent_Num',
-                    value="Reagent_Num",
-                    multi=True,
-                    placeholder='Select Reagent Lot Number',
-                    disabled = True
-                ),
+                # dbc.Col(space),
+                # dcc.Dropdown(
+                #     id='Reagent_Num',
+                #     value="Reagent_Num",
+                #     multi=True,
+                #     placeholder='Select Reagent Lot Number',
+                #     disabled = True
+                # ),
             ],
         )
     ],
@@ -263,18 +262,16 @@ QC = dbc.Card(
                 dcc.Dropdown(
                     id='QC_Num',
                     options=[
-                        {"label": col, "value": col}for col in iris.columns],
+                        {"label": col, "value": col}for col in QC_df.qc_lot_number],
                     value="QC_LOT",
-                    multi=True,
                     placeholder='Select QC Lot Number'
                 ),
                 dbc.Col(space),
                 dcc.Dropdown(
                     id='QC_Name',
                     options=[
-                        {"label": col, "value": col}for col in iris.columns],
+                        {"label": col, "value": col}for col in QC_df.qc_name],
                     value="QC_name",
-                    multi=True,
                     placeholder='Select QC Name'
                 ),
                 dbc.Col(space),
@@ -468,60 +465,44 @@ def update_output(start_date, end_date):
 
 
 
-def update_test_dropdown_options(key, var):
-    test_code_opt = []
-    test_name_opt = []
-    reagents_opt = []
-    for i in var:
-        if key == 1:
-            mycursor.execute("SELECT test_code, test_name, reagent_lot_number FROM test_analyzer JOIN Test ON test_code = t_code JOIN Analyzer ON analyzer_id = a_id JOIN Reagents ON reagent_lot_number = r_lot_number WHERE analyzer_id =  %s", (i,))
-        elif key == 2:
-            mycursor.execute("SELECT test_code, test_name, reagent_lot_number FROM test_analyzer JOIN Test ON test_code = t_code JOIN Analyzer ON analyzer_id = a_id JOIN Reagents ON reagent_lot_number = r_lot_number WHERE analyzer_name =  %s", (i,))
-        myresult = mycursor.fetchone()
-        test_code_opt.append(int(myresult[0]))
-        test_name_opt.append(myresult[1])
-        reagents_opt.append(myresult[2])
-    return test_code_opt, test_name_opt, reagents_opt
+test_name_opt = []
+
+def update_test_dropdown_options(var):
+
+    mycursor.execute("SELECT test_name FROM test_analyzer JOIN Test ON test_code = t_code JOIN Analyzer ON analyzer_id = a_id WHERE analyzer_name =  %s", (var,))
+    print("myresult",mycursor)
+    myresult = mycursor.fetchall()
+    test_name_opt.append(myresult)
+    return test_name_opt
 
 
 @app.callback(
-    Output('Test_Code', 'options'),
-    Output('Test_Code', 'disabled'),
     Output('Test_Name', 'options'),
     Output('Test_Name', 'disabled'),
-    Output('Reagent_Num', 'options'),
-    Output('Reagent_Num', 'disabled'),
-    Input('Analyzer_Code', 'value'),
     Input('Analyzer_Name', 'value'),
     prevent_initial_callbacks = True
 )
-def update_test_dropdowns(code,name):
-    test_code_arr = []
-    test_name_arr = []
-    reagents_arr = []
-    ctx = dash.callback_context
-    input_id = ctx.triggered[0]["prop_id"].split(".")[0]
-    print(input_id)
-    if input_id == "Analyzer_Code":
-        # name = None
-        test_code_arr, test_name_arr, reagents_arr = update_test_dropdown_options(1, code)
-    elif input_id == "Analyzer_Name":
-        # code = None
-        test_code_arr, test_name_arr, reagents_arr = update_test_dropdown_options(2, name)
-
-    if code == None:
-        return [{'label': 'Choose Analyzer First', 'value': 0}], True, [{'label': 'Choose Analyzer First', 'value': 0}], True, [{'label': 'Choose Analyzer First', 'value': 0}], True
-    elif name == None:
-         return [{'label': 'Choose Analyzer First', 'value': 0}], True, [{'label': 'Choose Analyzer First', 'value': 0}], True, [{'label': 'Choose Analyzer First', 'value': 0}], True
+def update_test_dropdowns(name):
+    if name == None:
+         return [{'label': 'Choose Analyzer First', 'value': 0}], True
     
-    return [{'label': j, 'value': j} for j in test_code_arr], False,[{'label': j, 'value': j} for j in test_name_arr], False, [{'label': j, 'value': j} for j in reagents_arr], False
+    test_name_arr = []
+    # ctx = dash.callback_context
+    # input_id = ctx.triggered[0]["prop_id"].split(".")[0]
+    # print(input_id)
 
+    test_name_arr = update_test_dropdown_options(name)
+    print (test_name_arr)
 
-
+    # if code == None:
+    #     return [{'label': 'Choose Analyzer First', 'value': 0}], True, [{'label': 'Choose Analyzer First', 'value': 0}], True, [{'label': 'Choose Analyzer First', 'value': 0}], True
+    
+    return [{'label': j, 'value': j} for j in test_name_arr], False
 
 # Calculate Button Function
 @app.callback(Output('Mean_Table', 'children'),
             Output('CV_Table', 'children'),
+            # Output('cluster-graph', 'children'),
             Input('Plot_Button', 'n_clicks'))
 def Calculate(n_clicks):
     MeanTableData=[]
@@ -540,6 +521,11 @@ def Calculate(n_clicks):
         MeanTableData,CvTableData = Updata_Calcs_Table_Data(Mean_Table_values,CV_Table_values)
    
     return html.Tbody(MeanTableData),html.Tbody(CvTableData)
+
+# def generate_controlChart(interval,) 
+
+
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)
