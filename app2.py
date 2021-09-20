@@ -49,7 +49,7 @@ iris = pd.DataFrame(iris_raw["data"], columns=iris_raw["feature_names"])
 Lab_df = pd.read_sql("SELECT DISTINCT lab_branch FROM Lab ", mydb)
 QC_df = pd.read_sql("SELECT qc_lot_number,qc_name FROM QC_Parameters ", mydb)
 Plot_df = pd.read_sql("SELECT qc_assigned_mean,qc_assigned_sd,qc_result FROM test_qc_results ", mydb)
-
+# print(Plot_df)
 
 
 # Create random data
@@ -573,11 +573,14 @@ def update_output(start_date, end_date):
 
 
 
-
-def update_dropdown_options(key, var):
+lab_branch_var = 'GTS'
+def update_dropdown_options(key, var, condition = 0):
     options_arr = []
+    print('var: ', var)
     if key == 1:
         mycursor.execute("SELECT DISTINCT lab_unit FROM Lab JOIN Analyzer on analyzer_id = a_id WHERE lab_branch = %s", (var,))
+    elif key == 2:
+        mycursor.execute("SELECT analyzer_name FROM Lab JOIN Analyzer on analyzer_id = a_id WHERE lab_unit = %s AND lab_branch = %s", (var, condition,))
     elif key == 3:
         mycursor.execute("SELECT test_name FROM test_analyzer JOIN Test ON test_code = t_code JOIN Analyzer ON analyzer_id = a_id WHERE analyzer_name =  %s", (var,))
     myresult = mycursor.fetchall()
@@ -601,24 +604,43 @@ def update_dropdown_options(key, var):
     # Output('Qc_level', 'disabled'),
     Input('Lab_branch', 'value'),
 )
-def update_test_dropdowns(name):
+def update_unit_dropdowns(name):
     arr = []
+    lab_branch_var = name
     if name == None:
-        print('ana goa l condition')
-        return [{'label': 'Choose Lab Branch', 'value': 0}], True
-
-    # ctx = dash.callback_context
-    # input_id = ctx.triggered[0]["prop_id"].split(".")[0]
-    # print(input_id)
-
+        return dash.no_update, True
+        
     arr = update_dropdown_options(1, name)
 
-    # print (test_name_arr)
-
-    # if code == None:
-    #     return [{'label': 'Choose Analyzer First', 'value': 0}], True, [{'label': 'Choose Analyzer First', 'value': 0}], True, [{'label': 'Choose Analyzer First', 'value': 0}], True
-    
     return [{'label': j, 'value': j} for j in arr], False
+
+@app.callback(
+    Output('Analyzer_Name', 'options'),
+    Output('Analyzer_Name', 'disabled'),
+    # Output('Test_Name', 'options'),
+    # Output('Test_Name', 'disabled'),
+    # Output('Qc_lot_number', 'options'),
+    # Output('Qc_lot_number', 'disabled'),
+    # Output('Qc_Name', 'options'),
+    # Output('Qc_Name', 'disabled'),
+    # Output('Qc_level', 'options'),
+    # Output('Qc_level', 'disabled'),
+    # Input('Lab_branch', 'value'),
+    Input('Lab_unit', 'value'),
+    Input('Lab_branch', 'value'),
+
+)
+def update_analyzer_name_dropdowns(unit, branch):
+    arr = []
+
+    if unit == None:
+        return dash.no_update, True
+
+    arr = update_dropdown_options(2, unit, branch)
+
+    return [{'label': j, 'value': j} for j in arr], False
+
+
 
 # Calculate Button Function
 @app.callback(Output('Mean_Table', 'children'),
