@@ -237,6 +237,7 @@ Test_control = dbc.Card(
                     placeholder='Select Test Name',
                     disabled = True
                 ),
+                
                 # dbc.Col(space),
                 # dcc.Dropdown(
                 #     id='Reagent_Num',
@@ -328,6 +329,8 @@ Calculations = dbc.Card(
 
 )
 
+# graph 
+fig = go.Figure(data=[go.Scatter(x=[1, 2, 3], y=[4, 1, 2]),go.Scatter(x=[1, 2, 3], y=[2,2,2])])
 
 # --------------------------------------------------------------Nav Bar---------------------------------------
 
@@ -414,7 +417,8 @@ app.layout = dbc.Container(
                     dbc.Col(Calculations),
                     dbc.Col(space),
                     dcc.Graph(id="cluster-graph",
-                              style={"margin-top": "-3em"}),
+                            figure=fig,
+                            style={"margin-top": "-3em"}),
 
                 ], md=8),
             ],
@@ -465,14 +469,13 @@ def update_output(start_date, end_date):
 
 
 
-test_name_opt = []
 
 def update_test_dropdown_options(var):
-
+    test_name_opt = []
     mycursor.execute("SELECT test_name FROM test_analyzer JOIN Test ON test_code = t_code JOIN Analyzer ON analyzer_id = a_id WHERE analyzer_name =  %s", (var,))
-    print("myresult",mycursor)
     myresult = mycursor.fetchall()
-    test_name_opt.append(myresult)
+    for i in myresult :
+        test_name_opt.append(i[0])
     return test_name_opt
 
 
@@ -497,7 +500,7 @@ def update_test_dropdowns(name):
     # if code == None:
     #     return [{'label': 'Choose Analyzer First', 'value': 0}], True, [{'label': 'Choose Analyzer First', 'value': 0}], True, [{'label': 'Choose Analyzer First', 'value': 0}], True
     
-    return [{'label': j, 'value': j} for j in test_name_arr], False
+    return [{'label': j, 'value': j} for j in test_name_arr], False 
 
 # Calculate Button Function
 @app.callback(Output('Mean_Table', 'children'),
