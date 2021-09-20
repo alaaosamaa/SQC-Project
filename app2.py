@@ -45,7 +45,7 @@ mycursor = mydb.cursor()
 iris_raw = datasets.load_iris()
 iris = pd.DataFrame(iris_raw["data"], columns=iris_raw["feature_names"])
 ## Analyzer_df = pd.read_sql("SELECT analyzer_name, analyzer_code FROM Analyzer WHERE analyzer_output = 'output2'", mydb)
-Analyzer_df = pd.read_sql("SELECT * FROM Analyzer ", mydb)
+# Analyzer_df = pd.read_sql("SELECT * FROM Analyzer ", mydb)
 Lab_df = pd.read_sql("SELECT DISTINCT lab_branch FROM Lab ", mydb)
 QC_df = pd.read_sql("SELECT qc_lot_number,qc_name FROM QC_Parameters ", mydb)
 
@@ -495,7 +495,7 @@ def update_output(start_date, end_date):
 def update_dropdown_options(key, var):
     options_arr = []
     if key == 1:
-        mycursor.execute("SELECT DISTINCT lab_unit FROM Lab WHERE lab_branch = %s", (var,))
+        mycursor.execute("SELECT DISTINCT lab_unit FROM Lab JOIN Analyzer on analyzer_id = a_id WHERE lab_branch = %s", (var,))
     elif key == 3:
         mycursor.execute("SELECT test_name FROM test_analyzer JOIN Test ON test_code = t_code JOIN Analyzer ON analyzer_id = a_id WHERE analyzer_name =  %s", (var,))
     myresult = mycursor.fetchall()
