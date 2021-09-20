@@ -48,6 +48,8 @@ iris = pd.DataFrame(iris_raw["data"], columns=iris_raw["feature_names"])
 # Analyzer_df = pd.read_sql("SELECT * FROM Analyzer ", mydb)
 Lab_df = pd.read_sql("SELECT DISTINCT lab_branch FROM Lab ", mydb)
 QC_df = pd.read_sql("SELECT qc_lot_number,qc_name FROM QC_Parameters ", mydb)
+Plot_df = pd.read_sql("SELECT qc_assigned_mean,qc_assigned_sd,qc_result FROM test_qc_results ", mydb)
+print(Plot_df)
 
 
 # Create random data
