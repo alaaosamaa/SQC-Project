@@ -49,7 +49,7 @@ iris = pd.DataFrame(iris_raw["data"], columns=iris_raw["feature_names"])
 Lab_df = pd.read_sql("SELECT DISTINCT lab_branch FROM Lab ", mydb)
 QC_df = pd.read_sql("SELECT qc_lot_number,qc_name FROM QC_Parameters ", mydb)
 Plot_df = pd.read_sql("SELECT qc_assigned_mean,qc_assigned_sd,qc_result FROM test_qc_results ", mydb)
-print(Plot_df)
+
 
 
 # Create random data
@@ -353,7 +353,87 @@ Calculations = dbc.Card(
 )
 
 # graph 
-fig = go.Figure(data=[go.Scatter(x=[1, 2, 3], y=[4, 1, 2]),go.Scatter(x=[1, 2, 3], y=[2,2,2])])
+
+def Get_QC_Results_data():
+    Results_arr = []
+    mycursor.execute("SELECT DISTINCT qc_result FROM test_qc_results WHERE qc_assigned_mean = %s", (90,))
+    myresult = mycursor.fetchall()
+    for i in myresult:
+        Results_arr.append(i[0])
+
+    return Results_arr , 90 , 5    
+
+def Qc_Plot():
+    Results_arr = []
+    Results_arr,Assigned_mean,Assigned_SD = Get_QC_Results_data()
+    X_axis = [i for i in range(len(Results_arr))]
+    Mean = [ Assigned_mean for i in range(len(Results_arr))]
+    P_One_SD = [ (Assigned_mean + Assigned_SD) for i in range(len(Results_arr))]
+    N_One_SD = [ (Assigned_mean - Assigned_SD) for i in range(len(Results_arr))]
+ 
+    trace1 = go.Scatter(
+        x=X_axis, 
+        y=Results_arr,
+        name = 'Data'
+        )
+    trace2 = go.Scatter(
+        x=X_axis,
+        y=Mean,
+        name = 'Mean', 
+        mode="lines",
+        marker_line_color='rgb(8,48,107)',
+        marker_line_width=0.5      
+        )
+    trace3 = go.Scatter(
+        x=X_axis, 
+        y=P_One_SD,
+        name = '+1σ',
+        mode="lines",
+        line=go.scatter.Line(color="gray")   
+        )
+    trace4 = go.Scatter(
+        x=X_axis, 
+        y=N_One_SD,
+        name = '-1σ',
+        mode="lines",  
+        line=go.scatter.Line(color="gray")  
+    )
+    data = [trace1, trace2, trace3, trace4]
+    # fig = go.Figure(data=[go.Scatter(x=X_axis, y=Results_arr),go.Scatter(x=X_axis, y=Mean),go.Scatter(x=X_axis, y=P_One_SD),go.Scatter(x=X_axis, y=N_One_SD)])
+    # x = np.arange(1,11)
+    # y1 = np.exp(x)
+    # y2 = np.log(x)
+    # trace1 = go.Scatter(
+    #     x = x,
+    #     y = y1,
+    #     name = 'exp'
+    #     )
+    # trace2 = go.Scatter(
+    #     x = x,
+    #     y = y2,
+    #     name = 'log',
+    #     yaxis = 'y2'
+    # )
+    # data = [trace1, trace2]
+    # layout = go.Layout(
+    #     title = 'Double Y Axis Example',
+    #     yaxis = dict(
+    #         title = 'exp',zeroline=True,
+    #         showline = True
+    #     ),
+    #     yaxis2 = dict(
+    #         title = 'log',
+    #         zeroline = True,
+    #         showline = True,
+    #         overlaying = 'x',
+    #         side = 'top',
+    #         # coloraxis = 'red'
+    #     )
+    # )
+    fig = go.Figure(data=data)
+
+    return fig 
+
 
 # --------------------------------------------------------------Nav Bar---------------------------------------
 
@@ -441,7 +521,7 @@ app.layout = dbc.Container(
                     dbc.Col(Calculations),
                     dbc.Col(space),
                     dcc.Graph(id="cluster-graph",
-                            figure=fig,
+                            figure=Qc_Plot(),
                             style={"margin-top": "-3em"}),
 
                 ], md=8),
@@ -503,7 +583,6 @@ def update_dropdown_options(key, var):
     myresult = mycursor.fetchall()
     for i in myresult:
         options_arr.append(i[0])
-    print('options array: ', options_arr)
     return options_arr
 
 
