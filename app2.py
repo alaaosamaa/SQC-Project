@@ -490,8 +490,11 @@ def update_output(start_date, end_date):
 
 def update_dropdown_options(key, var):
     options_arr = []
+    print('var: ', var)
     if key == 1:
         mycursor.execute("SELECT DISTINCT lab_unit FROM Lab JOIN Analyzer on analyzer_id = a_id WHERE lab_branch = %s", (var,))
+    elif key == 2:
+        mycursor.execute("SELECT analyzer_name FROM Lab JOIN Analyzer on analyzer_id = a_id WHERE lab_unit = %s", (var,))
     elif key == 3:
         mycursor.execute("SELECT test_name FROM test_analyzer JOIN Test ON test_code = t_code JOIN Analyzer ON analyzer_id = a_id WHERE analyzer_name =  %s", (var,))
     myresult = mycursor.fetchall()
@@ -516,23 +519,35 @@ def update_dropdown_options(key, var):
     # Output('Qc_level', 'disabled'),
     Input('Lab_branch', 'value'),
 )
-def update_test_dropdowns(name):
+def update_unit_dropdowns(name):
     arr = []
     if name == None:
-        print('ana goa l condition')
         return [{'label': 'Choose Lab Branch', 'value': 0}], True
-
-    # ctx = dash.callback_context
-    # input_id = ctx.triggered[0]["prop_id"].split(".")[0]
-    # print(input_id)
 
     arr = update_dropdown_options(1, name)
 
-    # print (test_name_arr)
+    return [{'label': j, 'value': j} for j in arr], False
 
-    # if code == None:
-    #     return [{'label': 'Choose Analyzer First', 'value': 0}], True, [{'label': 'Choose Analyzer First', 'value': 0}], True, [{'label': 'Choose Analyzer First', 'value': 0}], True
-    
+@app.callback(
+    Output('Analyzer_Name', 'options'),
+    Output('Analyzer_Name', 'disabled'),
+    # Output('Test_Name', 'options'),
+    # Output('Test_Name', 'disabled'),
+    # Output('Qc_lot_number', 'options'),
+    # Output('Qc_lot_number', 'disabled'),
+    # Output('Qc_Name', 'options'),
+    # Output('Qc_Name', 'disabled'),
+    # Output('Qc_level', 'options'),
+    # Output('Qc_level', 'disabled'),
+    Input('Lab_unit', 'value'),
+)
+def update_analyzer_name_dropdowns(name):
+    arr = []
+    if name == None:
+        return [{'label': 'Choose Lab Unit', 'value': 0}], True
+
+    arr = update_dropdown_options(2, name)
+
     return [{'label': j, 'value': j} for j in arr], False
 
 # Calculate Button Function
