@@ -46,6 +46,7 @@ iris_raw = datasets.load_iris()
 iris = pd.DataFrame(iris_raw["data"], columns=iris_raw["feature_names"])
 ## Analyzer_df = pd.read_sql("SELECT analyzer_name, analyzer_code FROM Analyzer WHERE analyzer_output = 'output2'", mydb)
 Analyzer_df = pd.read_sql("SELECT * FROM Analyzer ", mydb)
+Lab_df = pd.read_sql("SELECT DISTINCT lab_branch FROM Lab ", mydb)
 QC_df = pd.read_sql("SELECT qc_lot_number,qc_name FROM QC_Parameters ", mydb)
 
 
@@ -170,6 +171,7 @@ Duration = dbc.Card(
             [
                 dbc.Col([
                     dbc.Label('Priod Of Time'),
+                    dbc.Col(miniSpace),
                     dcc.DatePickerRange(
                         id='my-date-picker-range',
                         start_date_placeholder_text="Start Period",
@@ -188,26 +190,43 @@ Duration = dbc.Card(
 
 )
 
+# Card to select Lab branch and unit of the data
+Lab_control = dbc.Card(
+    [
+        dbc.FormGroup(
+            [
+            dbc.Label('Lab'),
+            dbc.Col(space),
+            dcc.Dropdown(
+                id='Lab_branch',
+                options=[
+                    {'label':name, 'value':name} for name in Lab_df.lab_branch],
+                placeholder = 'Select Branch'
+            ),
+            dbc.Col(space),
+            dcc.Dropdown(
+                id='Lab_unit',
+                disabled = True,
+                placeholder = 'Select Unit'
+            ),
+            ],
+        ),
+    ],
+    body=True,
+    className=cardShadow[0],
+    style=cardShadow[1]
+)
+
 # Card to select Analyzer name and code of the data
 Analyzer_control = dbc.Card(
     [
         dbc.FormGroup(
             [
             dbc.Label('Analyzer'),
-            # dbc.Col(space),
-            # dcc.Dropdown(
-            #     id='Analyzer_Code',
-            #     options=[
-            #         {'label':name, 'value':name} for name in Analyzer_df.analyzer_id],
-            #     multi=True,
-            #     placeholder = 'Select Analyzer Code'
-            # ),
             dbc.Col(space),
             dcc.Dropdown(
                 id='Analyzer_Name',
-                options=[
-                    {'label':name, 'value':name} for name in Analyzer_df.analyzer_name],
-                value="Analyzer_Name",
+                disabled = True,
                 placeholder = 'Select Analyzer Name'
             ),
             ],
@@ -233,9 +252,8 @@ Test_control = dbc.Card(
                 # dbc.Col(space),
                 dcc.Dropdown(
                     id='Test_Name',
-                    value="Test_Name",
-                    placeholder='Select Test Name',
-                    disabled = True
+                    disabled = True,
+                    placeholder='Select Test Name'
                 ),
                 
                 # dbc.Col(space),
@@ -264,8 +282,9 @@ QC = dbc.Card(
                     id='QC_Num',
                     options=[
                         {"label": col, "value": col}for col in QC_df.qc_lot_number],
-                    value="QC_LOT",
-                    placeholder='Select QC Lot Number'
+                    placeholder='Select QC Lot Number',
+                    disabled = True
+
                 ),
                 dbc.Col(space),
                 dcc.Dropdown(
@@ -273,6 +292,7 @@ QC = dbc.Card(
                     options=[
                         {"label": col, "value": col}for col in QC_df.qc_name],
                     value="QC_name",
+                    disabled = True,
                     placeholder='Select QC Name'
                 ),
                 dbc.Col(space),
@@ -282,6 +302,7 @@ QC = dbc.Card(
                         {"label": col, "value": col}for col in iris.columns],
                     value="QC_level",
                     multi=True,
+                    disabled = True,
                     placeholder='Select QC Level'
                 ),
             ],
@@ -361,7 +382,7 @@ NavBar = dbc.Navbar(
                 dbc.Row(
                     [
                         dbc.Col(html.Img(src=Logo, height="50px")),
-                        dbc.Col(dbc.NavbarBrand(html.H4("SQC Calculator", className="ml-2",
+                        dbc.Col(dbc.NavbarBrand(html.H4("SQC Module", className="ml-2",
                                                         style={'font-weight': 'bold', 'color': '#caccce', }))),
                     ],
                     align="center",
@@ -397,9 +418,10 @@ app.layout = dbc.Container(
                 # Filters card
                 dbc.Col([
                     dbc.Card(
-                        [
+                        [                            
                             dbc.Col(space),
                             dbc.Col(Duration),
+                            dbc.Col(Lab_control),
                             dbc.Col(Analyzer_control,),
                             dbc.Col(Test_control),
                             dbc.Col(QC),
@@ -470,37 +492,52 @@ def update_output(start_date, end_date):
 
 
 
-def update_test_dropdown_options(var):
-    test_name_opt = []
-    mycursor.execute("SELECT test_name FROM test_analyzer JOIN Test ON test_code = t_code JOIN Analyzer ON analyzer_id = a_id WHERE analyzer_name =  %s", (var,))
+def update_dropdown_options(key, var):
+    options_arr = []
+    if key == 1:
+        mycursor.execute("SELECT DISTINCT lab_unit FROM Lab WHERE lab_branch = %s", (var,))
+    elif key == 3:
+        mycursor.execute("SELECT test_name FROM test_analyzer JOIN Test ON test_code = t_code JOIN Analyzer ON analyzer_id = a_id WHERE analyzer_name =  %s", (var,))
     myresult = mycursor.fetchall()
-    for i in myresult :
-        test_name_opt.append(i[0])
-    return test_name_opt
+    for i in myresult:
+        options_arr.append(i[0])
+    print('options array: ', options_arr)
+    return options_arr
 
 
 @app.callback(
-    Output('Test_Name', 'options'),
-    Output('Test_Name', 'disabled'),
-    Input('Analyzer_Name', 'value'),
-    prevent_initial_callbacks = True
+    Output('Lab_unit', 'options'),
+    Output('Lab_unit', 'disabled'),
+    # Output('Analyzer_Name', 'options'),
+    # Output('Analyzer_Name', 'disabled'),
+    # Output('Test_Name', 'options'),
+    # Output('Test_Name', 'disabled'),
+    # Output('Qc_lot_number', 'options'),
+    # Output('Qc_lot_number', 'disabled'),
+    # Output('Qc_Name', 'options'),
+    # Output('Qc_Name', 'disabled'),
+    # Output('Qc_level', 'options'),
+    # Output('Qc_level', 'disabled'),
+    Input('Lab_branch', 'value'),
 )
 def update_test_dropdowns(name):
+    arr = []
     if name == None:
-         return [{'label': 'Choose Analyzer First', 'value': 0}], True
-    
-    test_name_arr = []
+        print('ana goa l condition')
+        return [{'label': 'Choose Lab Branch', 'value': 0}], True
+
     # ctx = dash.callback_context
     # input_id = ctx.triggered[0]["prop_id"].split(".")[0]
     # print(input_id)
 
-    test_name_arr = update_test_dropdown_options(name)
-    print (test_name_arr)
+    arr = update_dropdown_options(1, name)
+
+    # print (test_name_arr)
 
     # if code == None:
     #     return [{'label': 'Choose Analyzer First', 'value': 0}], True, [{'label': 'Choose Analyzer First', 'value': 0}], True, [{'label': 'Choose Analyzer First', 'value': 0}], True
     
-    return [{'label': j, 'value': j} for j in test_name_arr], False 
+    return [{'label': j, 'value': j} for j in arr], False
 
 # Calculate Button Function
 @app.callback(Output('Mean_Table', 'children'),
