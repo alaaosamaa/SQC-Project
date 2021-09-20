@@ -18,22 +18,22 @@ mydb = mysql.connector.connect(
 mycursor = mydb.cursor()
 
 mycursor.execute(
-    "CREATE TABLE IF NOT EXISTS Analyzer (analyzer_id INT NOT NULL, analyzer_name VARCHAR(255), anlyzer_manufacturer VARCHAR(255), analyzer_model VARCHAR(255), analyzer_branch VARCHAR(255), analyzer_lab_unit VARCHAR(255),PRIMARY KEY(analyzer_id), UNIQUE(analyzer_model))")
+    "CREATE TABLE IF NOT EXISTS Analyzer (analyzer_id INT NOT NULL, analyzer_name VARCHAR(255), anlyzer_manufacturer VARCHAR(255), analyzer_model VARCHAR(255), PRIMARY KEY(analyzer_id))")
 
 mycursor.execute(
-    "CREATE TABLE IF NOT EXISTS Test (test_code INT NOT NULL, test_name VARCHAR(255), test_measurement_unit VARCHAR(255), test_delta_check VARCHAR(255), test_analytical_quality_goal VARCHAR(255), test_group VARCHAR(255), PRIMARY KEY(test_code), UNIQUE(test_name))")
+    "CREATE TABLE IF NOT EXISTS Test (test_code INT NOT NULL, test_name VARCHAR(255), test_measurement_unit VARCHAR(255), test_delta_check VARCHAR(255), test_analytical_quality_goal VARCHAR(255), test_group VARCHAR(255), PRIMARY KEY(test_code))")
 
 mycursor.execute(
-    "CREATE TABLE IF NOT EXISTS Reagents (reagent_lot_number INT NOT NULL, reagent_name VARCHAR(255), reagent_manufacturer VARCHAR(255), reagent_expiry_date DATE, PRIMARY KEY(reagent_lot_number), UNIQUE(reagent_name))")
+    "CREATE TABLE IF NOT EXISTS Reagents (reagent_lot_number INT NOT NULL, reagent_name VARCHAR(255), reagent_manufacturer VARCHAR(255), reagent_expiry_date DATE, PRIMARY KEY(reagent_lot_number))")
 
 mycursor.execute(
     "CREATE TABLE IF NOT EXISTS test_analyzer (a_id INT NOT NULL, t_code INT NOT NULL, r_lot_number INT NOT NULL, linear_range_from INT, linear_range_to INT, FOREIGN KEY (a_id) REFERENCES Analyzer(analyzer_id), FOREIGN KEY (t_code) REFERENCES Test(test_code), FOREIGN KEY (r_lot_number) REFERENCES Reagents(reagent_lot_number))")
 
 mycursor.execute(
-    "CREATE TABLE IF NOT EXISTS QC_Parameters (qc_lot_number INT NOT NULL, qc_name VARCHAR(255), qc_type VARCHAR(255), qc_level VARCHAR(255), qc_manufacturer VARCHAR(255), qc_speciality VARCHAR(255), qc_expiry_date DATE, PRIMARY KEY(qc_lot_number), UNIQUE(qc_name))")
+    "CREATE TABLE IF NOT EXISTS QC_Parameters (qc_id INT NOT NULL, qc_lot_number INT NOT NULL, qc_name VARCHAR(255), qc_type VARCHAR(255), qc_level VARCHAR(255), qc_manufacturer VARCHAR(255), qc_speciality VARCHAR(255), qc_expiry_date DATE, PRIMARY KEY(qc_id))")
 
 mycursor.execute(
-    "CREATE TABLE IF NOT EXISTS test_qc_results (t_code INT NOT NULL, a_id INT NOT NULL, r_lot_number INT NOT NULL, qc_lot_number INT NOT NULL, qc_assigned_mean INT, qc_assigned_sd INT, qc_assigned_cv INT, qualitative_assigned INT, qc_result INT, qc_flag BOOLEAN, qc_date DATE, qc_calculated_mean INT, qc_calculated_sd INT, qc_calculated_cv INT, qc_overall_status VARCHAR(255), FOREIGN KEY (t_code) REFERENCES Test(test_code), FOREIGN KEY (a_id) REFERENCES Analyzer(analyzer_id), FOREIGN KEY (r_lot_number) REFERENCES Reagents(reagent_lot_number), FOREIGN KEY (qc_lot_number) REFERENCES QC_Parameters(qc_lot_number))")
+    "CREATE TABLE IF NOT EXISTS test_qc_results (t_code INT NOT NULL, a_id INT NOT NULL, r_lot_number INT NOT NULL, q_c_id INT NOT NULL, qc_assigned_mean INT, qc_assigned_sd INT, qc_assigned_cv INT, qualitative_assigned INT, qc_result INT, qc_flag BOOLEAN, qc_date DATE, qc_calculated_mean INT, qc_calculated_sd INT, qc_calculated_cv INT, qc_overall_status VARCHAR(255), FOREIGN KEY (t_code) REFERENCES Test(test_code), FOREIGN KEY (a_id) REFERENCES Analyzer(analyzer_id), FOREIGN KEY (r_lot_number) REFERENCES Reagents(reagent_lot_number), FOREIGN KEY (q_c_id) REFERENCES QC_Parameters(qc_id))")
 
 mycursor.execute(
     "CREATE TABLE IF NOT EXISTS Calculated_Parameters (ids INT NOT NULL, no_of_points INT, mu INT, ewma INT, cusum INT, PRIMARY KEY(ids))")
@@ -49,24 +49,24 @@ for x in mycursor:
 
 
 
-sql = "INSERT INTO Analyzer (analyzer_id, analyzer_name, anlyzer_manufacturer, analyzer_model, analyzer_branch, analyzer_lab_unit) VALUES (%s, %s, %s, %s, %s, %s)"
+sql = "INSERT INTO Analyzer (analyzer_id, analyzer_name, anlyzer_manufacturer, analyzer_model) VALUES (%s, %s, %s, %s)"
 val = [
-    ('1001', 'Analyzer1','Company1','M1','GTS','Hematology'),
-    ('1002', 'Analyzer2','Company1','M2','GTS','Hematology'),
-    ('1003', 'Analyzer3','Company1','M3','GTS','Hematology'),
-    ('1004', 'Analyzer4','Company2','M4','GTS','Hematology'),
-    ('1005', 'Analyzer5','Company2','M5','GTS','Hematology'),
-    ('1006', 'Analyzer6','Company2','M6','GTS','Hematology'),
-    ('1007', 'Analyzer7','Company3','M7','GTS','Hematology'),
-    ('1008', 'Analyzer8','Company3','M8','GTS','Hematology'),
-    ('1009', 'Analyzer9','Company3','M9','GTS','Hematology'),
-    ('1010', 'Analyzer10','Company4','M10','GTS','Hematology'),
-    ('1011', 'Analyzer11','Company4','M11','GTS','Hematology'),
-    ('1012', 'Analyzer12','Company4','M12','GTS','Hematology'),
-    ('1013', 'Analyzer13','Company5','M13','GTS','Hematology'),
-    ('1014', 'Analyzer14','Company5','M14','GTS','Hematology'),
-    ('1015', 'Analyzer15','Company5','M15','GTS','Hematology'),
-    ('1016', 'Analyzer16','Company6','M16','GTS','Hematology'),
+    ('1001', 'Analyzer1', 'Company1', 'M1'),
+    ('1002', 'Analyzer2', 'Company1', 'M2'),
+    ('1003', 'Analyzer3', 'Company1', 'M3'),
+    ('1004', 'Analyzer1', 'Company2', 'M4'),
+    ('1005', 'Analyzer2', 'Company2', 'M5'),
+    ('1006', 'Analyzer3', 'Company2', 'M6'),
+    ('1007', 'Analyzer1', 'Company3', 'M7'),
+    ('1008', 'Analyzer2', 'Company3', 'M8'),
+    ('1009', 'Analyzer3', 'Company3', 'M9'),
+    ('1010', 'Analyzer1', 'Company4', 'M10'),
+    ('1011', 'Analyzer2', 'Company4', 'M11'),
+    ('1012', 'Analyzer2', 'Company4', 'M12'),
+    ('1013', 'Analyzer3', 'Company5', 'M13'),
+    ('1014', 'Analyzer1', 'Company5', 'M14'),
+    ('1015', 'Analyzer2', 'Company5', 'M15'),
+    ('1016', 'Analyzer3', 'Company6', 'M16'),
 ]
 
 mycursor.executemany(sql, val)
@@ -76,22 +76,22 @@ mydb.commit()
 
 sql = "INSERT INTO Test (test_code, test_name, test_measurement_unit, test_delta_check, test_analytical_quality_goal, test_group) VALUES (%s, %s,%s, %s, %s, %s)"
 val = [
-    ('2001', 'Test1','Unit1','Function1','Goal1','Group1'),
-    ('2002', 'Test2','Unit2','Function2','Goal2','Group2'),
-    ('2003', 'Test3','Unit3','Function3','Goal3','Group3'),
-    ('2004', 'Test4','Unit4','Function4','Goal4','Group4'),
-    ('2005', 'Test5','Unit5','Function5','Goal5','Group5'),
-    ('2006', 'Test6','Unit6','Function6','Goal6','Group6'),
-    ('2007', 'Test7','Unit7','Function7','Goal7','Group7'),
-    ('2008', 'Test8','Unit8','Function8','Goal8','Group8'),
-    ('2009', 'Test9','Unit9','Function9','Goal9','Group9'),
-    ('2010', 'Test10','Unit10','Function10','Goal10','Group10'),
-    ('2011', 'Test11','Unit11','Function11','Goal11','Group11'),
-    ('2012', 'Test12','Unit12','Function12','Goal12','Group12'),
-    ('2013', 'Test13','Unit13','Function13','Goal13','Group13'),
-    ('2014', 'Test14','Unit14','Function14','Goal14','Group14'),
-    ('2015', 'Test15','Unit15','Function15','Goal15','Group15'),
-    ('2016', 'Test16','Unit16','Function16','Goal16','Group16'),
+    ('2001', 'Glucose','mg/dL','Function1','Goal1','Group1'),
+    ('2002', 'Acetaminophen','μg/mL','Function2','Goal2','Group2'),
+    ('2003', 'Albumin','g/dL','Function3','Goal3','Group3'),
+    ('2004', 'Cholesterol','mg/dL','Function4','Goal4','Group4'),
+    ('2005', 'Glucose','mg/dL','Function5','Goal5','Group5'),
+    ('2006', 'Acetaminophen','μg/mL','Function6','Goal6','Group6'),
+    ('2007', 'Albumin','g/dL','Function7','Goal7','Group7'),
+    ('2008', 'Cholesterol','mg/dL','Function8','Goal8','Group8'),
+    ('2009', 'Glucose','mg/dL','Function9','Goal9','Group9'),
+    ('2010', 'Acetaminophen','μg/mL','Function10','Goal10','Group10'),
+    ('2011', 'Albumin','g/dL1','Function11','Goal11','Group11'),
+    ('2012', 'Cholesterol','mg/dL2','Function12','Goal12','Group12'),
+    ('2013', 'Glucose','mg/dL','Function13','Goal13','Group13'),
+    ('2014', 'Acetaminophen','μg/mL','Function14','Goal14','Group14'),
+    ('2015', 'Albumin','g/dL','Function15','Goal15','Group15'),
+    ('2016', 'Cholesterol','mg/dL','Function16','Goal16','Group16'),
 ]
 
 mycursor.executemany(sql, val)
@@ -125,24 +125,24 @@ mydb.commit()
 
 ###
 
-sql = "INSERT INTO QC_Parameters (qc_lot_number, qc_name, qc_type, qc_level, qc_manufacturer,qc_speciality, qc_expiry_date) VALUES (%s, %s,%s, %s, %s, %s, %s)"
+sql = "INSERT INTO QC_Parameters (qc_id, qc_lot_number, qc_name, qc_type, qc_level, qc_manufacturer,qc_speciality, qc_expiry_date) VALUES (%s, %s,%s, %s, %s, %s, %s, %s)"
 val = [
-    ('4001', 'QC1', 'Type1', 'Level1', 'M1', 'SP1','2022-1-1'),
-    ('4002', 'QC2', 'Type2', 'Level1', 'M2', 'SP2','2022-1-1'),
-    ('4003', 'QC3', 'Type3', 'Level1', 'M3', 'SP3','2022-2-2'),
-    ('4004', 'QC4', 'Type4', 'Level1', 'M4', 'SP4','2022-2-2'),
-    ('4005', 'QC5', 'Type5', 'Level2', 'M5', 'SP5','2022-3-3'),
-    ('4006', 'QC6', 'Type6', 'Level2', 'M6', 'SP6','2022-3-3'),
-    ('4007', 'QC7', 'Type7', 'Level2', 'M7', 'SP7','2022-4-4'),
-    ('4008', 'QC8', 'Type8', 'Level2', 'M8', 'SP8','2022-4-4'),
-    ('4009', 'QC9', 'Type9', 'Level3', 'M9', 'SP9','2022-5-5'),
-    ('4010', 'QC10', 'Type10', 'Level3', 'M10', 'SP10','2022-5-5'),
-    ('4011', 'QC11', 'Type11', 'Level3', 'M11', 'SP11','2022-6-6'),
-    ('4012', 'QC12', 'Type12', 'Level3', 'M12', 'SP12','2022-6-6'),
-    ('4013', 'QC13', 'Type13', 'Level4', 'M13', 'SP13','2022-7-7'),
-    ('4014', 'QC14', 'Type14', 'Level4', 'M14', 'SP14','2022-7-7'),
-    ('4015', 'QC15', 'Type15', 'Level4', 'M15', 'SP15','2022-8-8'),
-    ('4016', 'QC16', 'Type16', 'Level4', 'M16', 'SP16','2022-8-8'),
+    ('4001', '401', 'QC1',  'Type1',  'Level1', 'M1',  'SP1', '2022-1-1'),
+    ('4002', '401', 'QC2',  'Type2',  'Level1', 'M2',  'SP2', '2022-1-1'),
+    ('4003', '401', 'QC3',  'Type3',  'Level1', 'M3',  'SP3', '2022-2-2'),
+    ('4004', '401', 'QC4',  'Type4',  'Level1', 'M4',  'SP4', '2022-2-2'),
+    ('4005', '401', 'QC5',  'Type5',  'Level2', 'M5',  'SP5', '2022-3-3'),
+    ('4006', '401', 'QC6',  'Type6',  'Level2', 'M6',  'SP6', '2022-3-3'),
+    ('4007', '402', 'QC7',  'Type7',  'Level2', 'M7',  'SP7', '2022-4-4'),
+    ('4008', '402', 'QC8',  'Type8',  'Level2', 'M8',  'SP8', '2022-4-4'),
+    ('4009', '402', 'QC9',  'Type9',  'Level3', 'M9',  'SP9', '2022-5-5'),
+    ('4010', '402', 'QC10', 'Type10', 'Level3', 'M10', 'SP10','2022-5-5'),
+    ('4011', '402', 'QC11', 'Type11', 'Level3', 'M11', 'SP11','2022-6-6'),
+    ('4012', '403', 'QC12', 'Type12', 'Level3', 'M12', 'SP12','2022-6-6'),
+    ('4013', '403', 'QC13', 'Type13', 'Level4', 'M13', 'SP13','2022-7-7'),
+    ('4014', '403', 'QC14', 'Type14', 'Level4', 'M14', 'SP14','2022-7-7'),
+    ('4015', '403', 'QC15', 'Type15', 'Level4', 'M15', 'SP15','2022-8-8'),
+    ('4016', '403', 'QC16', 'Type16', 'Level4', 'M16', 'SP16','2022-8-8'),
     
 ]
 
@@ -151,7 +151,7 @@ mydb.commit()
 
 
 
-sql = "INSERT INTO test_qc_results (t_code, a_id, r_lot_number, qc_lot_number, qc_assigned_mean, qc_assigned_sd, qc_assigned_cv, qualitative_assigned, qc_result, qc_flag, qc_date, qc_calculated_mean, qc_calculated_sd, qc_calculated_cv, qc_overall_status) VALUES (%s, %s, %s, %s, %s,%s, %s, %s, %s, %s,%s, %s, %s, %s, %s)"
+sql = "INSERT INTO test_qc_results (t_code, a_id, r_lot_number, q_c_id, qc_assigned_mean, qc_assigned_sd, qc_assigned_cv, qualitative_assigned, qc_result, qc_flag, qc_date, qc_calculated_mean, qc_calculated_sd, qc_calculated_cv, qc_overall_status) VALUES (%s, %s, %s, %s, %s,%s, %s, %s, %s, %s,%s, %s, %s, %s, %s)"
 val = [
     ('2001', '1001', '3001', '4001', '92', '11', '15', '17', '99', '1',       '2021-1-1', '95', '9', '19', 'PENDING'),
     ('2002', '1002', '3002', '4002', '90', '5', '10', '15', '100', '1',       '2021-1-2', '94', '10', '16', 'PENDING'),
@@ -178,22 +178,22 @@ mydb.commit()
 
 sql = "INSERT INTO test_analyzer (a_id, t_code, r_lot_number, linear_range_from , linear_range_to) VALUES (%s, %s, %s, %s, %s)"
 val = [
-    ('1001', '2001', '3001', '10','20'),
-    ('1002', '2002', '3002', '10','20'),
-    ('1003', '2003', '3003', '10','20'),
-    ('1004', '2004', '3004', '10','20'),
-    ('1005', '2005', '3005', '10','20'),
-    ('1006', '2006', '3006', '10','20'),
-    ('1007', '2007', '3007', '10','20'),
-    ('1008', '2008', '3008', '10','20'),
-    ('1009', '2009', '3009', '10','20'),
-    ('1010', '2010', '3010', '10','20'),
-    ('1011', '2011', '3011', '10','20'),
-    ('1012', '2012', '3012', '10','20'),
-    ('1013', '2013', '3013', '10','20'),
-    ('1014', '2014', '3014', '10','20'),
-    ('1015', '2015', '3015', '10','20'),
-    ('1016', '2016', '3016', '10','20')
+    ('1001', '2001', '3001', '10', '20'),
+    ('1002', '2002', '3002', '10', '20'),
+    ('1003', '2003', '3003', '10', '20'),
+    ('1004', '2004', '3004', '10', '20'),
+    ('1005', '2005', '3005', '10', '20'),
+    ('1006', '2006', '3006', '10', '20'),
+    ('1007', '2007', '3007', '10', '20'),
+    ('1008', '2008', '3008', '10', '20'),
+    ('1009', '2009', '3009', '10', '20'),
+    ('1010', '2010', '3010', '10', '20'),
+    ('1011', '2011', '3011', '10', '20'),
+    ('1012', '2012', '3012', '10', '20'),
+    ('1013', '2013', '3013', '10', '20'),
+    ('1014', '2014', '3014', '10', '20'),
+    ('1015', '2015', '3015', '10', '20'),
+    ('1016', '2016', '3016', '10', '20')
 ]
     
 
@@ -217,22 +217,22 @@ mydb.commit()
 
 sql = "INSERT INTO Lab (lab_id, a_id, lab_branch, lab_unit) VALUES (%s, %s, %s, %s)"
 val = [
-    ('0001', '1001', 'GTS', 'Hematology'),
-    ('0002', '1002', 'GTS', 'Hematology'),
-    ('0003', '1003', 'GTS', 'Hematology'),
-    ('0004', '1004', 'GTS', 'Hematology'),
-    ('0005', '1005', 'GTS', 'Hematology'),
-    ('0006', '1006', 'GTS', 'Hematology'),
-    ('0007', '1007', 'GTS', 'Hematology'),
-    ('0008', '1008', 'GTS', 'Hematology'),
-    ('0009', '1009', 'GTS', 'Hematology'),
-    ('0010', '1010', 'GTS', 'Hematology'),
-    ('0011', '1011', 'GTS', 'Hematology'),
-    ('0012', '1012', 'GTS', 'Hematology'),
-    ('0013', '1013', 'GTS', 'Hematology'),
-    ('0014', '1014', 'GTS', 'Hematology'),
-    ('0015', '1015', 'GTS', 'Hematology'),
-    ('0016', '1016', 'GTS', 'Hematology'),
+    ('0001', '1001', 'GTS',     'Hematology'),
+    ('0002', '1002', 'GTS',     'Hematology'),
+    ('0003', '1003', 'GTS',     'Hematology'),
+    ('0004', '1004', 'GTS',     'Chemistry'),
+    ('0005', '1005', 'GTS',     'Chemistry'),
+    ('0006', '1006', 'GTS',     'Chemistry'),
+    ('0007', '1007', 'GTT',     'Microbiology'),
+    ('0008', '1008', 'GTT',     'Microbiology'),
+    ('0009', '1009', 'GTT',     'Microbiology'),
+    ('0010', '1010', 'GTT',     'Immunology'),
+    ('0011', '1011', 'GTT',     'Immunology'),
+    ('0012', '1012', 'GSS',     'Immunology'),
+    ('0013', '1013', 'GSS',     'Hematology'),
+    ('0014', '1014', 'GSS',     'Cytology'),
+    ('0015', '1015', 'GSS',     'Cytology'),
+    ('0016', '1016', 'GSS',     'Cytology'),
 ]
 
 mycursor.executemany(sql, val)
