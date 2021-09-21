@@ -380,7 +380,10 @@ def Qc_Plot(Plot_Mean_SD_df):
     trace1 = go.Scatter(
         x=X_axis, 
         y=Results_arr,
-        name = 'Data'   
+        name = 'Data',
+        line=dict(
+                    color='orange', 
+                    dash='solid')   
         )
     trace2 = go.Scatter(
         x=X_axis,
@@ -458,8 +461,17 @@ def Qc_Plot(Plot_Mean_SD_df):
     
     layout = go.Layout(
         title = 'Control chart',
+        xaxis = dict(
+            showgrid = False,
+            zeroline = True,
+            showline = True,
+            showticklabels = True,
+            gridwidth = 1
+        ),
         yaxis = dict(
-            title = 'QC Results',zeroline=True,
+            title = 'QC Results',
+            zeroline=True,
+            showgrid = False,
             showline = True 
         )
         # ,
@@ -475,6 +487,13 @@ def Qc_Plot(Plot_Mean_SD_df):
     fig = go.Figure(data = data ,layout = layout)
 
     return fig 
+
+# Checkbox if the user want to show Calculated mean
+DrawCalcMeanOption = dcc.Checklist(
+    options=[
+        {'label': 'Draw Calculated Mean', 'value': 'Yes'},
+    ]
+)
 
 
 # --------------------------------------------------------------Nav Bar---------------------------------------
@@ -562,9 +581,20 @@ app.layout = dbc.Container(
                 dbc.Col([
                     dbc.Col(Calculations),
                     dbc.Col(space),
-                    dcc.Graph(id="cluster-graph",
+                    # dcc.Graph(id="cluster-graph",
+                    #         figure=Qc_Plot(Plot_Mean_SD_df),
+                    #         style={"margin-top": "-3em"}),
+                    dbc.Card(
+                        [
+                            dcc.Graph(id="cluster-graph",
                             figure=Qc_Plot(Plot_Mean_SD_df),
-                            style={"margin-top": "-3em"}),
+                            ),
+                            dbc.Col(DrawCalcMeanOption),
+                        ],
+                        body=True,
+                        className = "shadow-sm p-3 mb-5 bg-white rounded",
+                        style={"margin-top": "-3em"}
+                    )
 
                 ], md=8),
             ],
