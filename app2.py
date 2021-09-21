@@ -563,7 +563,7 @@ app.layout = dbc.Container(
                     dbc.Col(Calculations),
                     dbc.Col(space),
                     dcc.Graph(id="cluster-graph",
-                            figure=Qc_Plot(Plot_Mean_SD_df),
+                            # figure='figure',
                             style={"margin-top": "-3em"}),
 
                 ], md=8),
@@ -687,7 +687,7 @@ def update_analyzer_name_dropdowns(unit, branch):
 # Calculate Button Function
 @app.callback(Output('Mean_Table', 'children'),
             Output('CV_Table', 'children'),
-            # Output('cluster-graph', 'children'),
+            Output('cluster-graph', 'figure'),
             Input('Plot_Button', 'n_clicks'))
 def Calculate(n_clicks):
     MeanTableData=[]
@@ -700,12 +700,13 @@ def Calculate(n_clicks):
 
         return html.Tbody(MeanTableData),html.Tbody(CvTableData)
     if n_clicks > 0 :
+        fig=Qc_Plot(Plot_Mean_SD_df)
         Calculations_data = Calculate_All(Sample1)
         Mean_Table_values[1],Mean_Table_values[3] = Calculations_data[0],Calculations_data[1]
         CV_Table_values[0],CV_Table_values[1] = Calculations_data[2],Calculations_data[3]
         MeanTableData,CvTableData = Updata_Calcs_Table_Data(Mean_Table_values,CV_Table_values)
    
-    return html.Tbody(MeanTableData),html.Tbody(CvTableData)
+    return html.Tbody(MeanTableData),html.Tbody(CvTableData),fig
 
 # def generate_controlChart(interval,) 
 
