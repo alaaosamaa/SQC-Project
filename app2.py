@@ -50,8 +50,7 @@ Lab_df = pd.read_sql("SELECT DISTINCT lab_branch FROM Lab ", mydb)
 QC_df = pd.read_sql("SELECT qc_lot_number,qc_name FROM QC_Parameters ", mydb)
 # Plot_df = pd.read_sql("SELECT qc_result FROM test_qc_results ", mydb)
 Plot_Mean_SD_df = pd.read_sql("SELECT DISTINCT qc_assigned_mean,qc_assigned_sd FROM test_qc_results ", mydb)
-# print(Plot_df)
-print(Plot_Mean_SD_df.qc_assigned_mean[0])
+
 
 
 # Create random data
@@ -354,7 +353,7 @@ Calculations = dbc.Card(
 
 )
 
-# graph 
+# ----------------------------------------------------------Graph---------------------------------------------------
 
 def Get_QC_Results_data(Plot_Mean_SD_df):
     Results_arr = []
@@ -364,7 +363,6 @@ def Get_QC_Results_data(Plot_Mean_SD_df):
     myresult = mycursor.fetchall()
     for i in myresult:
         Results_arr.append(i[0])
-    print(Results_arr)
     return Results_arr, Mean, SD
 
 def Qc_Plot(Plot_Mean_SD_df):
@@ -387,7 +385,7 @@ def Qc_Plot(Plot_Mean_SD_df):
     trace2 = go.Scatter(
         x=X_axis,
         y=Mean,
-        name = 'Mean', 
+        name = 'Assigned Mean', 
         mode="lines",
         opacity=0.6,
         line=dict(width=1.1,  #line styling
@@ -555,7 +553,7 @@ app.layout = dbc.Container(
                             dbc.Col(space)
                         ],
                         body=True,
-                        # style={'height': '90%',"overflowY": "scroll"}
+                        style={'height': '95%',"overflowY": "scroll"}
                         # className = "shadow-sm p-3 mb-5 bg-white rounded"
                     )
                 ], md=4),
