@@ -48,8 +48,10 @@ iris = pd.DataFrame(iris_raw["data"], columns=iris_raw["feature_names"])
 # Analyzer_df = pd.read_sql("SELECT * FROM Analyzer ", mydb)
 Lab_df = pd.read_sql("SELECT DISTINCT lab_branch FROM Lab ", mydb)
 QC_df = pd.read_sql("SELECT qc_lot_number,qc_name FROM QC_Parameters ", mydb)
-Plot_df = pd.read_sql("SELECT qc_assigned_mean,qc_assigned_sd,qc_result FROM test_qc_results ", mydb)
+# Plot_df = pd.read_sql("SELECT qc_result FROM test_qc_results ", mydb)
+Plot_Mean_SD_df = pd.read_sql("SELECT DISTINCT qc_assigned_mean,qc_assigned_sd FROM test_qc_results ", mydb)
 # print(Plot_df)
+print(Plot_Mean_SD_df.qc_assigned_mean[0])
 
 
 # Create random data
@@ -354,83 +356,125 @@ Calculations = dbc.Card(
 
 # graph 
 
-def Get_QC_Results_data():
+def Get_QC_Results_data(Plot_Mean_SD_df):
     Results_arr = []
-    mycursor.execute("SELECT DISTINCT qc_result FROM test_qc_results WHERE qc_assigned_mean = %s", (90,))
+    Mean = Plot_Mean_SD_df.qc_assigned_mean[0]
+    SD = int(Plot_Mean_SD_df.qc_assigned_sd[1])
+    mycursor.execute("SELECT qc_result FROM test_qc_results WHERE qc_assigned_mean = %s", (int(Mean),))
     myresult = mycursor.fetchall()
     for i in myresult:
         Results_arr.append(i[0])
+    print(Results_arr)
+    return Results_arr, Mean, SD
 
-    return Results_arr , 90 , 5    
-
-def Qc_Plot():
+def Qc_Plot(Plot_Mean_SD_df):
     Results_arr = []
-    Results_arr,Assigned_mean,Assigned_SD = Get_QC_Results_data()
+    Results_arr,Assigned_mean,Assigned_SD = Get_QC_Results_data(Plot_Mean_SD_df)
     X_axis = [i for i in range(len(Results_arr))]
     Mean = [ Assigned_mean for i in range(len(Results_arr))]
     P_One_SD = [ (Assigned_mean + Assigned_SD) for i in range(len(Results_arr))]
+    P_Two_SD = [ (Assigned_mean + 2*Assigned_SD) for i in range(len(Results_arr))]
+    P_Three_SD = [ (Assigned_mean + 3*Assigned_SD) for i in range(len(Results_arr))]
     N_One_SD = [ (Assigned_mean - Assigned_SD) for i in range(len(Results_arr))]
+    N_Two_SD = [ (Assigned_mean - 2*Assigned_SD) for i in range(len(Results_arr))]
+    N_Three_SD = [ (Assigned_mean - 3*Assigned_SD) for i in range(len(Results_arr))]
  
     trace1 = go.Scatter(
         x=X_axis, 
         y=Results_arr,
-        name = 'Data'
+        name = 'Data'   
         )
     trace2 = go.Scatter(
         x=X_axis,
         y=Mean,
         name = 'Mean', 
         mode="lines",
-        marker_line_color='rgb(8,48,107)',
-        marker_line_width=0.5      
+        opacity=0.6,
+        line=dict(width=1.1,  #line styling
+                    color='black', 
+                    dash='solid')
         )
     trace3 = go.Scatter(
         x=X_axis, 
         y=P_One_SD,
         name = '+1σ',
         mode="lines",
-        line=go.scatter.Line(color="gray")   
-        )
+        opacity=0.4,
+        line=dict(width=1.1,  #line styling
+                    color='Purple', 
+                    dash="dot")
+    )
     trace4 = go.Scatter(
         x=X_axis, 
         y=N_One_SD,
         name = '-1σ',
         mode="lines",  
-        line=go.scatter.Line(color="gray")  
+        opacity=0.4,
+        line=dict(width=1.1,  #line styling
+                    color='Purple', 
+                    dash='dot')
     )
-    data = [trace1, trace2, trace3, trace4]
-    # fig = go.Figure(data=[go.Scatter(x=X_axis, y=Results_arr),go.Scatter(x=X_axis, y=Mean),go.Scatter(x=X_axis, y=P_One_SD),go.Scatter(x=X_axis, y=N_One_SD)])
-    # x = np.arange(1,11)
-    # y1 = np.exp(x)
-    # y2 = np.log(x)
-    # trace1 = go.Scatter(
-    #     x = x,
-    #     y = y1,
-    #     name = 'exp'
-    #     )
-    # trace2 = go.Scatter(
-    #     x = x,
-    #     y = y2,
-    #     name = 'log',
-    #     yaxis = 'y2'
-    # )
-    # data = [trace1, trace2]
-    # layout = go.Layout(
-    #     title = 'Double Y Axis Example',
-    #     yaxis = dict(
-    #         title = 'exp',zeroline=True,
-    #         showline = True
-    #     ),
-    #     yaxis2 = dict(
-    #         title = 'log',
-    #         zeroline = True,
-    #         showline = True,
-    #         overlaying = 'x',
-    #         side = 'top',
-    #         # coloraxis = 'red'
-    #     )
-    # )
-    fig = go.Figure(data=data)
+    
+    trace5 = go.Scatter(
+        x=X_axis, 
+        y=P_Two_SD,
+        name = '+2σ',
+        mode="lines",
+        opacity=0.4,
+        line=dict(width=1.1,  #line styling
+                    color='blue', 
+                    dash='dot')  
+    )
+    trace6 = go.Scatter(
+        x=X_axis, 
+        y=N_Two_SD,
+        name = '-2σ',
+        mode="lines",  
+        opacity=0.4,
+        line=dict(width=1.1,  #line styling
+                color='blue', 
+                dash='dot')  
+    )
+     
+    trace7 = go.Scatter(
+        x=X_axis, 
+        y=P_Three_SD,
+        name = '+3σ',
+        mode="lines",
+        opacity=0.4,
+        line=dict(width=1.1,  #line styling
+                    color='green', 
+                    dash='dot')   
+        )
+    trace8 = go.Scatter(
+        x=X_axis, 
+        y=N_Three_SD,
+        name = '-3σ',
+        mode="lines",  
+        opacity=0.4,
+        line=dict(width=1.1,  #line styling
+                    color='green', 
+                    dash='dot')
+    )
+    data = [trace1, trace2, trace3, trace4,trace5, trace6, trace7, trace8]
+    
+    layout = go.Layout(
+        title = 'Control chart',
+        yaxis = dict(
+            title = 'QC Results',zeroline=True,
+            showline = True 
+        )
+        # ,
+        # yaxis2 = dict(
+        #     title = 'log',
+        #     zeroline = True,
+        #     showline = True,
+        #     overlaying = 'y',
+        #     side = 'right',
+        #     color = 'red'
+        # )
+    )
+    fig = go.Figure(data = data ,layout = layout)
 
     return fig 
 
@@ -521,7 +565,7 @@ app.layout = dbc.Container(
                     dbc.Col(Calculations),
                     dbc.Col(space),
                     dcc.Graph(id="cluster-graph",
-                            figure=Qc_Plot(),
+                            figure=Qc_Plot(Plot_Mean_SD_df),
                             style={"margin-top": "-3em"}),
 
                 ], md=8),
