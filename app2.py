@@ -363,13 +363,17 @@ def Get_QC_Results_data(Plot_Mean_SD_df):
     myresult = mycursor.fetchall()
     for i in myresult:
         Results_arr.append(i[0])
+    
     return Results_arr, Mean, SD
 
-def Qc_Plot(Plot_Mean_SD_df):
+
+def Qc_Plot(Plot_Mean_SD_df,val):
     Results_arr = []
     Results_arr,Assigned_mean,Assigned_SD = Get_QC_Results_data(Plot_Mean_SD_df)
     X_axis = [i for i in range(len(Results_arr))]
-    Mean = [ Assigned_mean for i in range(len(Results_arr))]
+    Ass_Mean = [ Assigned_mean for i in range(len(Results_arr))]
+    calc_Mean = Data_Mean(Results_arr)
+    calc_Mean_line = [ calc_Mean for i in range(len(Results_arr))]
     P_One_SD = [ (Assigned_mean + Assigned_SD) for i in range(len(Results_arr))]
     P_Two_SD = [ (Assigned_mean + 2*Assigned_SD) for i in range(len(Results_arr))]
     P_Three_SD = [ (Assigned_mean + 3*Assigned_SD) for i in range(len(Results_arr))]
@@ -387,7 +391,7 @@ def Qc_Plot(Plot_Mean_SD_df):
         )
     trace2 = go.Scatter(
         x=X_axis,
-        y=Mean,
+        y=Ass_Mean,
         name = 'Assigned Mean', 
         mode="lines",
         opacity=0.6,
@@ -457,7 +461,26 @@ def Qc_Plot(Plot_Mean_SD_df):
                     color='green', 
                     dash='dot')
     )
-    data = [trace1, trace2, trace3, trace4,trace5, trace6, trace7, trace8]
+    trace9 = go.Scatter(
+        x=X_axis, 
+        y=calc_Mean_line,
+        name = 'Calculated Mean',
+        mode="lines",  
+        opacity=0.4,
+        line=dict(width=1.1,  #line styling
+                    color='darkgreen', 
+                    dash='solid')
+    )
+     
+    
+    # if val == None :
+    #     data = [trace1, trace2, trace3, trace4,trace5, trace6, trace7, trace8]
+    # else :
+    #     data = [trace1, trace2, trace9, trace3, trace4,trace5, trace6, trace7, trace8]
+    if val == "Hide":
+        data = [trace1, trace2, trace3, trace4,trace5, trace6, trace7, trace8]
+    elif val == "Show" :
+        data = [trace1, trace2, trace9, trace3, trace4,trace5, trace6, trace7, trace8]
     
     layout = go.Layout(
         title = 'Control chart',
@@ -486,14 +509,19 @@ def Qc_Plot(Plot_Mean_SD_df):
     )
     fig = go.Figure(data = data ,layout = layout)
 
-    return fig 
+    return fig ,Results_arr
 
 # Checkbox if the user want to show Calculated mean
-DrawCalcMeanOption = dcc.Checklist(
-    options=[
-        {'label': 'Draw Calculated Mean', 'value': 'Yes'},
-    ]
-)
+DrawCalcMeanOption = html.Div([
+ 
+    dbc.Label('Calculated Mean Line'),
+    dcc.RadioItems(
+                id='Draw_calc_Mean_option',
+                options=[{'label': i, 'value': i} for i in ['Show', 'Hide']],
+                value='Hide',
+                labelStyle={'display': 'block',"text-align": "center"}
+            )
+])
 
 
 # --------------------------------------------------------------Nav Bar---------------------------------------
@@ -581,14 +609,19 @@ app.layout = dbc.Container(
                 dbc.Col([
                     dbc.Col(Calculations),
                     dbc.Col(space),
-                    # dcc.Graph(id="cluster-graph",
-                    #         figure=Qc_Plot(Plot_Mean_SD_df),
-                    #         style={"margin-top": "-3em"}),
                     dbc.Card(
                         [
                             dcc.Graph(id="cluster-graph",
                             ),
-                            dbc.Col(DrawCalcMeanOption),
+                            html.Hr(
+                                # style={"margin-top": "-1em"}
+                            ),
+                            dbc.Col(
+                                DrawCalcMeanOption
+                            ,
+                            md=4,
+                            style= {"text-align": "center"}
+                            ),
                         ],
                         body=True,
                         className = "shadow-sm p-3 mb-5 bg-white rounded",
@@ -717,25 +750,47 @@ def update_analyzer_name_dropdowns(unit, branch):
 @app.callback(Output('Mean_Table', 'children'),
             Output('CV_Table', 'children'),
             Output('cluster-graph', 'figure'),
-            Input('Plot_Button', 'n_clicks'))
-def Calculate(n_clicks):
+            Input('Plot_Button', 'n_clicks'),
+            Input('Draw_calc_Mean_option', 'value'))
+def Calculate(n_clicks,val):
     MeanTableData=[]
     CvTableData=[]
     Calculations_data= []
+    QC_Results = []
+    # ctx = dash.callback_context
+    # input_id = ctx.triggered[0]["prop_id"].split(".")[0]
+    # print(input_id)
 
     if n_clicks == 0:
         MeanTableData = Mean_Table_Data
         CvTableData = CV_Table_Data
 
-        return html.Tbody(MeanTableData),html.Tbody(CvTableData)
+        return html.Tbody(MeanTableData),html.Tbody(CvTableData),go.Figure([])
+    
     if n_clicks > 0 :
-        fig=Qc_Plot(Plot_Mean_SD_df)
-        Calculations_data = Calculate_All(Sample1)
+        
+        # if val == "Hide":
+        #     fig, QC_Results = Qc_Plot(Plot_Mean_SD_df,None)
+        # elif val == "Show" :
+        fig, QC_Results =Qc_Plot(Plot_Mean_SD_df,val)
+        
+        Calculations_data = Calculate_All(QC_Results)
         Mean_Table_values[1],Mean_Table_values[3] = Calculations_data[0],Calculations_data[1]
         CV_Table_values[0],CV_Table_values[1] = Calculations_data[2],Calculations_data[3]
         MeanTableData,CvTableData = Updata_Calcs_Table_Data(Mean_Table_values,CV_Table_values)
    
     return html.Tbody(MeanTableData),html.Tbody(CvTableData),fig
+
+# @app.callback(Output('cluster-graph', 'figure'),
+#             Input('DrawCalcMeanOption', 'value'))
+# def update_graph(value):
+
+   
+
+#     else :
+        
+
+#     return fig
 
 # def generate_controlChart(interval,) 
 
