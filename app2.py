@@ -49,7 +49,7 @@ iris = pd.DataFrame(iris_raw["data"], columns=iris_raw["feature_names"])
 Lab_df = pd.read_sql("SELECT DISTINCT lab_branch FROM Lab ", mydb)
 QC_df = pd.read_sql("SELECT qc_lot_number,qc_name FROM QC_Parameters ", mydb)
 # Plot_df = pd.read_sql("SELECT qc_result FROM test_qc_results ", mydb)
-Plot_Mean_SD_df = pd.read_sql("SELECT DISTINCT qc_assigned_mean,qc_assigned_sd FROM test_qc_results ", mydb)
+Plot_Mean_SD_df = pd.read_sql("SELECT DISTINCT qc_assigned_mean,qc_assigned_sd,qc_date FROM test_qc_results ", mydb)
 
 
 
@@ -359,18 +359,19 @@ def Get_QC_Results_data(Plot_Mean_SD_df):
     Results_arr = []
     Mean = Plot_Mean_SD_df.qc_assigned_mean[0]
     SD = int(Plot_Mean_SD_df.qc_assigned_sd[1])
+    date=Plot_Mean_SD_df.qc_date
     mycursor.execute("SELECT qc_result FROM test_qc_results WHERE qc_assigned_mean = %s", (int(Mean),))
     myresult = mycursor.fetchall()
     for i in myresult:
         Results_arr.append(i[0])
     
-    return Results_arr, Mean, SD
+    return Results_arr, Mean, SD,date
 
 
 def Qc_Plot(Plot_Mean_SD_df,val):
     Results_arr = []
-    Results_arr,Assigned_mean,Assigned_SD = Get_QC_Results_data(Plot_Mean_SD_df)
-    X_axis = [i for i in range(len(Results_arr))]
+    Results_arr,Assigned_mean,Assigned_SD,date = Get_QC_Results_data(Plot_Mean_SD_df)
+    X_axis = [date for i in range(len(Results_arr))]
     Ass_Mean = [ Assigned_mean for i in range(len(Results_arr))]
     calc_Mean = Data_Mean(Results_arr)
     calc_Mean_line = [ calc_Mean for i in range(len(Results_arr))]
@@ -380,7 +381,6 @@ def Qc_Plot(Plot_Mean_SD_df,val):
     N_One_SD = [ (Assigned_mean - Assigned_SD) for i in range(len(Results_arr))]
     N_Two_SD = [ (Assigned_mean - 2*Assigned_SD) for i in range(len(Results_arr))]
     N_Three_SD = [ (Assigned_mean - 3*Assigned_SD) for i in range(len(Results_arr))]
- 
     trace1 = go.Scatter(
         x=X_axis, 
         y=Results_arr,
@@ -390,7 +390,7 @@ def Qc_Plot(Plot_Mean_SD_df,val):
                     dash='solid')   
         )
     trace2 = go.Scatter(
-        x=X_axis,
+        # x=X_axis,
         y=Ass_Mean,
         name = 'Assigned Mean', 
         mode="lines",
@@ -400,7 +400,7 @@ def Qc_Plot(Plot_Mean_SD_df,val):
                     dash='solid')
         )
     trace3 = go.Scatter(
-        x=X_axis, 
+        # x=X_axis, 
         y=P_One_SD,
         name = '+1σ',
         mode="lines",
@@ -410,7 +410,7 @@ def Qc_Plot(Plot_Mean_SD_df,val):
                     dash="dot")
     )
     trace4 = go.Scatter(
-        x=X_axis, 
+        # x=X_axis, 
         y=N_One_SD,
         name = '-1σ',
         mode="lines",  
@@ -421,7 +421,7 @@ def Qc_Plot(Plot_Mean_SD_df,val):
     )
     
     trace5 = go.Scatter(
-        x=X_axis, 
+        # x=X_axis, 
         y=P_Two_SD,
         name = '+2σ',
         mode="lines",
@@ -431,7 +431,7 @@ def Qc_Plot(Plot_Mean_SD_df,val):
                     dash='dot')  
     )
     trace6 = go.Scatter(
-        x=X_axis, 
+        # x=X_axis, 
         y=N_Two_SD,
         name = '-2σ',
         mode="lines",  
@@ -442,7 +442,7 @@ def Qc_Plot(Plot_Mean_SD_df,val):
     )
      
     trace7 = go.Scatter(
-        x=X_axis, 
+        # x=X_axis, 
         y=P_Three_SD,
         name = '+3σ',
         mode="lines",
@@ -452,7 +452,7 @@ def Qc_Plot(Plot_Mean_SD_df,val):
                     dash='dot')   
         )
     trace8 = go.Scatter(
-        x=X_axis, 
+        # x=X_axis, 
         y=N_Three_SD,
         name = '-3σ',
         mode="lines",  
@@ -462,7 +462,7 @@ def Qc_Plot(Plot_Mean_SD_df,val):
                     dash='dot')
     )
     trace9 = go.Scatter(
-        x=X_axis, 
+        # x=X_axis, 
         y=calc_Mean_line,
         name = 'Calculated Mean',
         mode="lines",  
@@ -485,17 +485,20 @@ def Qc_Plot(Plot_Mean_SD_df,val):
     layout = go.Layout(
         title = 'Control chart',
         xaxis = dict(
-            showgrid = False,
-            zeroline = True,
-            showline = True,
+            title='Date',
+            
+            # zeroline = True,
+            # showline = True,
             showticklabels = True,
-            gridwidth = 1
+            tickangle=40,
+            
+            # gridwidth = 1,
         ),
         yaxis = dict(
             title = 'QC Results',
-            zeroline=True,
-            showgrid = False,
-            showline = True 
+            # zeroline=True,
+            # showgrid = False,
+            # showline = True 
         )
         # ,
         # yaxis2 = dict(
@@ -508,7 +511,8 @@ def Qc_Plot(Plot_Mean_SD_df,val):
         # )
     )
     fig = go.Figure(data = data ,layout = layout)
-
+    fig.update_layout(xaxis_tickformat = '%d %B (%a)<br>%Y',)
+    fig.update_xaxes(showgrid = False,)
     return fig ,Results_arr
 
 # Checkbox if the user want to show Calculated mean
@@ -673,9 +677,20 @@ def update_output(start_date, end_date):
     if len(string_prefix) == len(''):
         return 'Select a date to see it displayed here'
     else:
+        Update_DateRange(start_date_object,end_date_object)
         return string_prefix
+date=[]       
+def Update_DateRange(start,end):
+    options_arr = []
+    mycursor.execute("SELECT qc_date FROM test_qc_results  WHERE ( qc_date between %s and %s)",(start,end))
+    # >= %s AND To_date <= %s", (start,end))
+    myresult = mycursor.fetchall()
+    for i in myresult:
+        options_arr.append(i[0])
+    date.append(options_arr)    
+    print (date)
 
-
+    return options_arr
 
 lab_branch_var = 'GTS'
 def update_dropdown_options(key, var, condition = 0):
