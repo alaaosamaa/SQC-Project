@@ -1,7 +1,7 @@
 from os import name, terminal_size
 import dash
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 from dash_bootstrap_components import themes
 from dash_bootstrap_components._components.Button import Button
 from dash_bootstrap_components._components.Col import Col
@@ -589,7 +589,12 @@ app.layout = dbc.Container(
                 # Filters card
                 dbc.Col([
                     dbc.Card(
-                        [                            
+                        [    
+                            dcc.Store(id ='myresult_analyzer_name_memory'),
+                            dcc.Store(id='myresult_test_name_memory'),
+                            dcc.Store(id='myresult_qc_lot_num_memory'),
+                            dcc.Store(id='myresult_qc_name_memory'),     
+                            dcc.Store(id='myresult_qc_level_memory'),                                                        
                             dbc.Col(space),
                             dbc.Col(Duration),
                             dbc.Col(Lab_control),
@@ -677,73 +682,142 @@ def update_output(start_date, end_date):
 
 
 
-lab_branch_var = 'GTS'
-def update_dropdown_options(key, var, condition = 0):
-    options_arr = []
-    print('var: ', var)
-    if key == 1:
-        mycursor.execute("SELECT DISTINCT lab_unit FROM Lab JOIN Analyzer on analyzer_id = a_id WHERE lab_branch = %s", (var,))
-    elif key == 2:
-        mycursor.execute("SELECT analyzer_name FROM Lab JOIN Analyzer on analyzer_id = a_id WHERE lab_unit = %s AND lab_branch = %s", (var, condition,))
-    elif key == 3:
-        mycursor.execute("SELECT test_name FROM test_analyzer JOIN Test ON test_code = t_code JOIN Analyzer ON analyzer_id = a_id WHERE analyzer_name =  %s", (var,))
-    myresult = mycursor.fetchall()
-    for i in myresult:
-        options_arr.append(i[0])
-    return options_arr
-
-
+########################################################  START OF FILTERS  ########################################################
+######################################################## To update lab unit ########################################################
 @app.callback(
     Output('Lab_unit', 'options'),
     Output('Lab_unit', 'disabled'),
-    # Output('Analyzer_Name', 'options'),
-    # Output('Analyzer_Name', 'disabled'),
-    # Output('Test_Name', 'options'),
-    # Output('Test_Name', 'disabled'),
-    # Output('Qc_lot_number', 'options'),
-    # Output('Qc_lot_number', 'disabled'),
-    # Output('Qc_Name', 'options'),
-    # Output('Qc_Name', 'disabled'),
-    # Output('Qc_level', 'options'),
-    # Output('Qc_level', 'disabled'),
     Input('Lab_branch', 'value'),
+    prevent_initial_call = True,
 )
-def update_unit_dropdowns(name):
+def update_unit_dropdowns(branch):
     arr = []
-    lab_branch_var = name
-    if name == None:
+    if branch == None:
         return dash.no_update, True
-        
-    arr = update_dropdown_options(1, name)
+
+    mycursor.execute("SELECT DISTINCT lab_unit FROM Lab JOIN Analyzer on analyzer_id = a_id WHERE lab_branch = %s", (branch,))
+    myresult = mycursor.fetchall()
+    for i in myresult:
+        arr.append(i[0])
 
     return [{'label': j, 'value': j} for j in arr], False
 
+######################################################## To update analyzer name ########################################################
 @app.callback(
     Output('Analyzer_Name', 'options'),
     Output('Analyzer_Name', 'disabled'),
-    # Output('Test_Name', 'options'),
-    # Output('Test_Name', 'disabled'),
-    # Output('Qc_lot_number', 'options'),
-    # Output('Qc_lot_number', 'disabled'),
-    # Output('Qc_Name', 'options'),
-    # Output('Qc_Name', 'disabled'),
-    # Output('Qc_level', 'options'),
-    # Output('Qc_level', 'disabled'),
-    # Input('Lab_branch', 'value'),
+    Output('myresult_analyzer_name_memory', 'data'),
     Input('Lab_unit', 'value'),
     Input('Lab_branch', 'value'),
-
+    prevent_initial_call = True,
 )
 def update_analyzer_name_dropdowns(unit, branch):
     arr = []
 
     if unit == None:
-        return dash.no_update, True
+        return dash.no_update, True, arr
 
-    arr = update_dropdown_options(2, unit, branch)
+    mycursor.execute("SELECT analyzer_name, analyzer_id FROM Lab JOIN Analyzer on analyzer_id = a_id WHERE lab_unit = %s AND lab_branch = %s", (unit, branch,))
+    myresult = mycursor.fetchall()
 
-    return [{'label': j, 'value': j} for j in arr], False
+    for i in myresult:
+        arr.append(i[0])
 
+    return [{'label': j, 'value': j} for j in arr], False, myresult
+
+######################################################## To update test name ########################################################
+@app.callback(
+    Output('Test_Name', 'options'),
+    Output('Test_Name', 'disabled'),
+    Output('myresult_test_name_memory', 'data'),
+    Input('Analyzer_Name', 'value'),
+    Input('myresult_analyzer_name_memory', 'data'),
+    prevent_initial_call = True,
+)
+def update_test_name_dropdowns(name, a_names_ids):
+    arr = []
+    if name == None:
+        return dash.no_update, True, arr
+
+    t_names_codes = []
+    for i in a_names_ids:
+        mycursor.execute("SELECT test_name, test_code FROM test_analyzer JOIN Test ON test_code = t_code JOIN Analyzer ON analyzer_id = a_id WHERE analyzer_name = %s AND analyzer_id =  %s", (name, i[1],))
+        myresult = mycursor.fetchall()
+        for x in myresult:
+            arr.append(x[0])
+            t_names_codes.append(x)
+        
+    return [{'label': j, 'value': j} for j in arr], False, t_names_codes
+
+######################################################## To update QC lot number ########################################################
+@app.callback(
+    Output('QC_Num', 'options'),
+    Output('QC_Num', 'disabled'),
+    Output('myresult_qc_lot_num_memory', 'data'),
+    Input('Test_Name', 'value'),
+    Input('myresult_test_name_memory', 'data'),   
+    prevent_initial_call = True,
+)
+def update_qc_lot_num_dropdowns(name, t_names_codes):
+    arr = []
+    if name == None:
+        return dash.no_update, True, arr
+    qc_num_codes = []
+    for i in t_names_codes:
+        mycursor.execute("SELECT DISTINCT q_c_id, qc_lot_number FROM test_qc_results JOIN Test ON test_code = t_code JOIN QC_Parameters ON qc_id = q_c_id WHERE test_name = %s AND test_code = %s", (name, i[1],))
+        myresult = mycursor.fetchall()
+        for x in myresult:
+            arr.append(x[1])
+            qc_num_codes.append(x[1])
+        
+    return [{'label': j, 'value': j} for j in arr], False, qc_num_codes
+
+######################################################## To update QC Name ########################################################
+@app.callback(
+    Output('QC_Name', 'options'),
+    Output('QC_Name', 'disabled'),
+    Output('myresult_qc_name_memory', 'data'),
+    Input('QC_Num', 'value'),
+    Input('myresult_qc_lot_num_memory', 'data'),   
+    prevent_initial_call = True,
+)
+def update_qc_name_dropdowns(lot_num, qc_num_ids):
+    arr = []
+    if lot_num == None:
+        return dash.no_update, True, arr
+    qc_names = []
+    for i in qc_num_ids:
+        mycursor.execute("SELECT DISTINCT qc_name FROM QC_Parameters WHERE qc_lot_number = %s ", (lot_num,))
+        myresult = mycursor.fetchall()
+        for x in myresult:
+            arr.append(x[0])
+            qc_names.append(x[0])
+        
+    return [{'label': j, 'value': j} for j in arr], False, qc_names
+
+######################################################## To update QC Level ########################################################
+@app.callback(
+    Output('QC_Level', 'options'),
+    Output('QC_Level', 'disabled'),
+    Output('myresult_qc_level_memory', 'data'),   
+    Input('QC_Name', 'value'),
+    prevent_initial_call = True,
+)
+def update_qc_level_dropdowns(qcname):
+    arr = []
+    if qcname == None:
+        return dash.no_update, True, arr
+    # qc_levels = []
+    # for i in qcname:
+    mycursor.execute("SELECT DISTINCT qc_level FROM QC_Parameters WHERE qc_name = %s ", (qcname,))
+    myresult = mycursor.fetchall()
+    for x in myresult:
+        arr.append(x[0])
+        # qc_levels.append(x[0])
+        
+    return [{'label': j, 'value': j} for j in arr], False, arr
+
+    ######################################################## END OF FILTERS ########################################################
 
 
 # Calculate Button Function
@@ -759,7 +833,6 @@ def Calculate(n_clicks,val):
     QC_Results = []
     # ctx = dash.callback_context
     # input_id = ctx.triggered[0]["prop_id"].split(".")[0]
-    # print(input_id)
 
     if n_clicks == 0:
         MeanTableData = Mean_Table_Data
