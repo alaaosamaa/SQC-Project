@@ -600,7 +600,7 @@ app.layout = dbc.Container(
                             dbc.Col(space)
                         ],
                         body=True,
-                        style={'height': '95%',"overflowY": "scroll"}
+                        style={'height': '85%',"overflowY": "scroll"}
                         # className = "shadow-sm p-3 mb-5 bg-white rounded"
                     )
                 ], md=4),
@@ -634,7 +634,7 @@ app.layout = dbc.Container(
             style={"margin-top": "1rem", "padding-bottom": "1rem"}
         ),
     ],
-    style={"background-color": "#eaeaea", "height": "100%"},
+    style={"background-color": "#eaeaea", "height": "100%", "position": 'flex'},
     fluid=True,
 
 )
@@ -769,9 +769,6 @@ def Calculate(n_clicks,val):
     
     if n_clicks > 0 :
         
-        # if val == "Hide":
-        #     fig, QC_Results = Qc_Plot(Plot_Mean_SD_df,None)
-        # elif val == "Show" :
         fig, QC_Results =Qc_Plot(Plot_Mean_SD_df,val)
         
         Calculations_data = Calculate_All(QC_Results)
