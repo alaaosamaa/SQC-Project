@@ -368,16 +368,21 @@ Calculations = dbc.Table(html.Tbody(graph_calcs),  id='Mean_Table',borderless = 
 # )
 
 # Checkbox if the user want to show Calculated mean
-DrawCalcMeanOption = html.Div([
- 
-    dbc.Label('Calculated Mean Line'),
-    dcc.RadioItems(
-                id='Draw_calc_Mean_option',
-                options=[{'label': i, 'value': i} for i in ['Show', 'Hide']],
-                value='Hide',
-                labelStyle={'display': 'block',"text-align": "center"}
-            )
-])
+
+def DrawCalcMeanOption():
+    # ID = 'Draw_calc_Mean_option' + str(i)
+    # print (ID)
+    DrawCalcMeanOption = html.Div([
+    
+        dbc.Label('Calculated Mean Line'),
+        dcc.RadioItems(
+                    id='Draw_calc_Mean_option0',
+                    options=[{'label': i, 'value': i} for i in ['Show', 'Hide']],
+                    value='Hide',
+                    labelStyle={'display': 'block',"text-align": "center"}
+                )
+    ])
+    return DrawCalcMeanOption
 
 
 # --------------------------------------------------------------Nav Bar---------------------------------------
@@ -475,14 +480,15 @@ app.layout = dbc.Container(
                             [
                                 dbc.Col(Calculations),
                                 html.Div(
+                                dbc.Card(
                                 dcc.Graph(id="cluster-graph",
-                                )
+                                ))
                                 ,id = "graph_container"),
                                 html.Hr(
                                     # style={"margin-top": "-1em"}
                                 ),
                                 dbc.Col(
-                                    DrawCalcMeanOption
+                                    DrawCalcMeanOption()
                                 ,
                                 md=4,
                                 style= {"text-align": "center"}
@@ -867,6 +873,12 @@ def graph_card(fig):
         dbc.Col(space),
         dbc.Card([
         dcc.Graph(id='level_graph' ,figure = fig),
+        # dbc.Col(
+        #         DrawCalcMeanOption()
+        #         ,
+        #         md=4,
+        #         style= {"text-align": "center"}
+        #         ),
         ],),
         dbc.Col(space),
     ])
@@ -880,7 +892,7 @@ def graph_card(fig):
             Output('graph_container', 'children'),
             # Output('initial_graph', 'children'),
             Input('Plot_Button', 'n_clicks'),
-            State('Draw_calc_Mean_option', 'value'),
+            Input('Draw_calc_Mean_option0', 'value'),
             State('myresult_test_memory', 'data'),
             State('myresult_qc_lot_num_memory', 'data'),
             State('QC_Name', 'value'),
