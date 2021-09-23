@@ -450,11 +450,12 @@ app.layout = dbc.Container(
                 dbc.Col([
                     dbc.Col(Calculations),
                     dbc.Col(space),
-                    html.Div(
-                        dbc.Card( 
+                    dbc.Card( 
                             [
+                                html.Div(
                                 dcc.Graph(id="cluster-graph",
-                                ),
+                                )
+                                ,id = "graph_container"),
                                 html.Hr(
                                     # style={"margin-top": "-1em"}
                                 ),
@@ -469,8 +470,7 @@ app.layout = dbc.Container(
                             body=True,
                             className = "shadow-sm p-3 mb-5 bg-white rounded",
                             style={"margin-top": "-0.5em"}
-                        )
-                    ,id = "graph_container"),
+                        ),
 
                 ], md=8, style={'width':'100%'}),
             ],
@@ -822,24 +822,14 @@ def Qc_Plot(testCode,qcLotNum,qcName,qcLevel,CalcMeanShow):
     return fig ,Results_arr
 
 def graph_card(fig):
-    graph = dbc.Col(dbc.Card(
+    graph = html.Div(
     [
         dbc.Col(space),
+        dbc.Card([
         dcc.Graph(id='level_graph' ,figure = fig),
-        html.Hr(
-            # style={"margin-top": "-1em"}
-        ),
-        dbc.Col(
-            DrawCalcMeanOption
-        ,md=4,
-        style= {"text-align": "center"}
-        ),
+        ],),
         dbc.Col(space),
-    ],
-    body=True,
-    className = "shadow-sm p-3 mb-5 bg-white rounded",
-    style={"margin-top": "-2em"}
-    ), md = 12)
+    ])
 
     return graph
 
@@ -850,7 +840,7 @@ def graph_card(fig):
             Output('graph_container', 'children'),
             # Output('initial_graph', 'children'),
             Input('Plot_Button', 'n_clicks'),
-            Input('Draw_calc_Mean_option', 'value'),
+            State('Draw_calc_Mean_option', 'value'),
             State('myresult_test_memory', 'data'),
             State('myresult_qc_lot_num_memory', 'data'),
             State('QC_Name', 'value'),
