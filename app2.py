@@ -1,7 +1,7 @@
 from os import name, terminal_size
 import dash
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 from dash_bootstrap_components import themes
 from dash_bootstrap_components._components.Button import Button
 from dash_bootstrap_components._components.Col import Col
@@ -49,7 +49,7 @@ iris = pd.DataFrame(iris_raw["data"], columns=iris_raw["feature_names"])
 Lab_df = pd.read_sql("SELECT DISTINCT lab_branch FROM Lab ", mydb)
 QC_df = pd.read_sql("SELECT qc_lot_number,qc_name FROM QC_Parameters ", mydb)
 # Plot_df = pd.read_sql("SELECT qc_result FROM test_qc_results ", mydb)
-Plot_Mean_SD_df = pd.read_sql("SELECT DISTINCT qc_assigned_mean,qc_assigned_sd FROM test_qc_results ", mydb)
+# Plot_Mean_SD_df = pd.read_sql("SELECT qc_result, qc_assigned_mean, qc_assigned_sd FROM test_qc_results JOIN Test ON test_code = t_code JOIN QC_Parameters ON qc_id = q_c_id WHERE test_name = %s AND test_code = %s AND qc_lot_number = %s AND qc_name =%s AND qc_level = %s", (name, i[1],) 
 
 
 
@@ -246,13 +246,6 @@ Test_control = dbc.Card(
         dbc.FormGroup(
             [
                 dbc.Label('Test'),
-                # dcc.Dropdown(
-                #     id='Test_Code', 
-                #     multi=True,
-                #     placeholder='Select Test Code',
-                #     disabled = True
-                # ),
-                # dbc.Col(space),
                 dcc.Dropdown(
                     id='Test_Name',
                     disabled = True,
@@ -349,27 +342,344 @@ Calculations = dbc.Card(
     ],
     body=True,
     className=cardShadow[0],
-    style={"width": "103.5%", "margin-left": "-1em"}
+    style={"width": "100%"}
 
 )
 
-# ----------------------------------------------------------Graph---------------------------------------------------
+# Checkbox if the user want to show Calculated mean
+DrawCalcMeanOption = html.Div([
+ 
+    dbc.Label('Calculated Mean Line'),
+    dcc.RadioItems(
+                id='Draw_calc_Mean_option',
+                options=[{'label': i, 'value': i} for i in ['Show', 'Hide']],
+                value='Hide',
+                labelStyle={'display': 'block',"text-align": "center"}
+            )
+])
 
-def Get_QC_Results_data(Plot_Mean_SD_df):
+
+# --------------------------------------------------------------Nav Bar---------------------------------------
+
+# make a reuseable navitem for the different examples
+nav_item = dbc.NavItem(dbc.NavLink(
+    'Home', href="#", style={"color": "#caccce"},))
+nav_item2 = dbc.NavItem(dbc.NavLink(
+    'Results', href="#", style={"color": "#caccce"},))
+
+# make a reuseable dropdown for the different examples
+dropdown = dbc.DropdownMenu(
+    children=[
+        dbc.DropdownMenuItem(
+            "more pages", header=True),
+        dbc.DropdownMenuItem(
+            "anything", href="#", style={'color': '#caccce', 'hover': {'color': '#2e4d61'}})
+    ],
+    nav=True,
+    in_navbar=True,
+    label="Menu",
+)
+
+NavBar = dbc.Navbar(
+    dbc.Container(
+        [
+            html.A(
+                # Use row and col to control vertical alignment of logo / brand
+                dbc.Row(
+                    [
+                        dbc.Col(html.Img(src=Logo, height="50px")),
+                        dbc.Col(dbc.NavbarBrand(html.H4("SQC Module", className="ml-2",
+                                                        style={'font-weight': 'bold', 'color': '#caccce', }))),
+                    ],
+                    align="center",
+                    no_gutters=True,
+                ),
+                href="#",
+            ),
+            dbc.NavbarToggler(id="navbar-toggler2", n_clicks=0),
+            dbc.Collapse(
+                dbc.Nav(
+                    [nav_item, nav_item2, dropdown], className="ml-auto", navbar=True
+                ),
+                id="navbar-collapse2",
+                navbar=True,
+            ),
+        ],
+        fluid=True,
+    ),
+    color="#2e4d61",
+    dark=True,
+    className="mb-10",
+)
+
+
+# -----------------------------------------------------------Whole Page-------------------------------------------------------------
+
+# Call app cards
+app.layout = dbc.Container(
+    [
+        dbc.Row(dbc.Col(NavBar, md=12)),
+        dbc.Row(
+            [
+                # Filters card
+                dbc.Col([
+                    dbc.Card(
+                        [    
+                            dcc.Store(id ='myresult_analyzer_memory'),
+                            dcc.Store(id='myresult_test_memory'),
+                            dcc.Store(id='myresult_qc_lot_num_memory'),
+                            dcc.Store(id='myresult_qc_name_memory'),     
+                            dcc.Store(id='myresult_qc_level_memory'),                                                        
+                            dbc.Col(space),
+                            dbc.Col(Duration),
+                            dbc.Col(Lab_control),
+                            dbc.Col(Analyzer_control,),
+                            dbc.Col(Test_control),
+                            dbc.Col(QC),
+                            dbc.Col(plotButton),
+                            dbc.Col(space)
+                        ],
+                        body=True,
+                        style={'height': '150 vmax',"overflowY": "scroll"}
+                        # className = "shadow-sm p-3 mb-5 bg-white rounded"
+                        
+                    )
+                ], md=4, style={'height':'fixed'}),
+
+                # Calculations and plot card
+                dbc.Col([
+                    dbc.Col(Calculations),
+                    dbc.Col(space),
+                    html.Div(
+                        dbc.Card( 
+                            [
+                                dcc.Graph(id="cluster-graph",
+                                ),
+                                html.Hr(
+                                    # style={"margin-top": "-1em"}
+                                ),
+                                dbc.Col(
+                                    DrawCalcMeanOption
+                                ,
+                                md=4,
+                                style= {"text-align": "center"}
+                                ),
+                            ],
+                            id = 'initial_graph',
+                            body=True,
+                            className = "shadow-sm p-3 mb-5 bg-white rounded",
+                            style={"margin-top": "-0.5em"}
+                        )
+                    ,id = "graph_container"),
+
+                ], md=8, style={'width':'100%'}),
+            ],
+            align="top",
+            style={"margin-top": "1rem", "padding-bottom": "1rem"}
+        ),
+    ],
+    style={"background-color": "#eaeaea", "height": "100%", "position": 'flex'},
+    # className = "container-xl",
+    fluid=True,
+
+)
+
+# --------------------------------------------------------------------Functions------------------------------------------
+
+# Navbar
+
+
+@app.callback(
+    Output("navbar-collapse", "is_open"),
+    [Input("navbar-toggler", "n_clicks")],
+    # [State("navbar-collapse", "is_open")],
+)
+def toggle_navbar_collapse(n, is_open):
+    if n:
+        return not is_open
+    return is_open
+
+
+# Select period Function
+@app.callback(
+    dash.dependencies.Output('output-container-date-picker-range', 'children'),
+    [dash.dependencies.Input('my-date-picker-range', 'start_date'),
+     dash.dependencies.Input('my-date-picker-range', 'end_date')])
+def update_output(start_date, end_date):
+    string_prefix = ''
+    if start_date is not None:
+        start_date_object = date.fromisoformat(start_date)
+        start_date_string = start_date_object.strftime('%B %d, %Y')
+        string_prefix = string_prefix + 'Start Date: ' + start_date_string + ' | '
+    if end_date is not None:
+        end_date_object = date.fromisoformat(end_date)
+        end_date_string = end_date_object.strftime('%B %d, %Y')
+        string_prefix = string_prefix + 'End Date: ' + end_date_string
+    if len(string_prefix) == len(''):
+        return 'Select a date to see it displayed here'
+    else:
+        return string_prefix
+
+
+
+########################################################  START OF FILTERS  ########################################################
+######################################################## To update lab unit ########################################################
+@app.callback(
+    Output('Lab_unit', 'options'),
+    Output('Lab_unit', 'disabled'),
+    Input('Lab_branch', 'value'),
+    prevent_initial_call = True,
+)
+def update_unit_dropdowns(branch):
+    arr = []
+    if branch == None:
+        return dash.no_update, True
+
+    mycursor.execute("SELECT DISTINCT lab_unit FROM Lab JOIN Analyzer on analyzer_id = a_id WHERE lab_branch = %s", (branch,))
+    myresult = mycursor.fetchall()
+    for i in myresult:
+        arr.append(i[0])
+
+    return [{'label': j, 'value': j} for j in arr], False
+
+######################################################## To update analyzer name ########################################################
+@app.callback(
+    Output('Analyzer_Name', 'options'),
+    Output('Analyzer_Name', 'disabled'),
+    Output('myresult_analyzer_memory', 'data'),
+    Input('Lab_unit', 'value'),
+    Input('Lab_branch', 'value'),
+    prevent_initial_call = True,
+)
+def update_analyzer_name_dropdowns(unit, branch):
+    arr = []
+
+    if unit == None:
+        return dash.no_update, True, arr
+
+    mycursor.execute("SELECT analyzer_name, analyzer_id FROM Lab JOIN Analyzer on analyzer_id = a_id WHERE lab_unit = %s AND lab_branch = %s", (unit, branch,))
+    myresult = mycursor.fetchall()
+
+    for i in myresult:
+        arr.append(i[0])
+
+    return [{'label': j, 'value': j} for j in arr], False, myresult
+
+######################################################## To update test name ########################################################
+@app.callback(
+    Output('Test_Name', 'options'),
+    Output('Test_Name', 'disabled'),
+    Output('myresult_test_memory', 'data'),
+    Input('Analyzer_Name', 'value'),
+    Input('myresult_analyzer_memory', 'data'),
+    prevent_initial_call = True,
+)
+def update_test_name_dropdowns(name, a_names_ids):
+    arr = []
+    if name == None:
+        return dash.no_update, True, arr
+
+    t_names_codes = []
+    for i in a_names_ids:
+        mycursor.execute("SELECT test_name, test_code FROM test_analyzer JOIN Test ON test_code = t_code JOIN Analyzer ON analyzer_id = a_id WHERE analyzer_name = %s AND analyzer_id =  %s", (name, i[1],))
+        myresult = mycursor.fetchall()
+        for x in myresult:
+            arr.append(x[0])
+            t_names_codes.append(x)
+        
+    return [{'label': j, 'value': j} for j in arr], False, t_names_codes
+
+######################################################## To update QC lot number ########################################################
+@app.callback(
+    Output('QC_Num', 'options'),
+    Output('QC_Num', 'disabled'),
+    Output('myresult_qc_lot_num_memory', 'data'),
+    Input('Test_Name', 'value'),
+    Input('myresult_test_memory', 'data'),   
+    prevent_initial_call = True,
+)
+def update_qc_lot_num_dropdowns(name, t_names_codes):
+    arr = []
+    if name == None:
+        return dash.no_update, True, arr
+    qc_num_codes = []
+    for i in t_names_codes:
+        mycursor.execute("SELECT DISTINCT qc_lot_number FROM test_qc_results JOIN Test ON test_code = t_code JOIN QC_Parameters ON qc_id = q_c_id WHERE test_name = %s AND test_code = %s", (name, i[1],))
+        myresult = mycursor.fetchall()
+        for x in myresult:
+            arr.append(x[0])
+            qc_num_codes.append(x[0])
+            
+    return [{'label': j, 'value': j} for j in arr], False, qc_num_codes
+
+######################################################## To update QC Name ########################################################
+@app.callback(
+    Output('QC_Name', 'options'),
+    Output('QC_Name', 'disabled'),
+    Output('myresult_qc_name_memory', 'data'),
+    Input('QC_Num', 'value'),
+    Input('myresult_qc_lot_num_memory', 'data'),   
+    prevent_initial_call = True,
+)
+def update_qc_name_dropdowns(lot_num, qc_num_ids):
+    arr = []
+    if lot_num == None:
+        return dash.no_update, True, arr
+    qc_names = []
+
+    mycursor.execute("SELECT DISTINCT qc_name FROM QC_Parameters WHERE qc_lot_number = %s ", (lot_num,))
+    myresult = mycursor.fetchall()
+    for x in myresult:
+        arr.append(x[0])
+        qc_names.append(x[0])
+        
+    return [{'label': j, 'value': j} for j in arr], False, qc_names
+
+######################################################## To update QC Level ########################################################
+@app.callback(
+    Output('QC_Level', 'options'),
+    Output('QC_Level', 'disabled'),
+    Output('myresult_qc_level_memory', 'data'),   
+    Input('QC_Name', 'value'),
+    prevent_initial_call = True,
+)
+def update_qc_level_dropdowns(qcname):
+    arr = []
+    if qcname == None:
+        return dash.no_update, True, arr
+    # qc_levels = []
+    # for i in qcname:
+    mycursor.execute("SELECT DISTINCT qc_level FROM QC_Parameters WHERE qc_name = %s ", (qcname,))
+    myresult = mycursor.fetchall()
+    for x in myresult:
+        arr.append(x[0])
+        # qc_levels.append(x[0])
+        
+    return [{'label': j, 'value': j} for j in arr], False, arr
+
+######################################################## END OF FILTERS ########################################################
+    
+######################################################## START GRAPH ########################################################
+
+def Get_QC_Results_data(testCode, qcLotNum, qcName, qcLevel):
     Results_arr = []
-    Mean = Plot_Mean_SD_df.qc_assigned_mean[0]
-    SD = int(Plot_Mean_SD_df.qc_assigned_sd[1])
-    mycursor.execute("SELECT qc_result FROM test_qc_results WHERE qc_assigned_mean = %s", (int(Mean),))
+    assigned_mean = 0
+    assigned_SD = 0
+    # Mean = Plot_Mean_SD_df.qc_assigned_mean[0]
+    # SD = int(Plot_Mean_SD_df.qc_assigned_sd[1])
+    mycursor.execute("SELECT qc_result, qc_assigned_mean, qc_assigned_sd FROM test_qc_results JOIN Test ON test_code = t_code JOIN QC_Parameters ON qc_id = q_c_id WHERE test_code = %s AND qc_lot_number = %s AND qc_name =%s AND qc_level = %s", (testCode, qcLotNum, qcName, qcLevel,))
     myresult = mycursor.fetchall()
     for i in myresult:
         Results_arr.append(i[0])
-    
-    return Results_arr, Mean, SD
+        assigned_mean = i[1]
+        assigned_SD = i[2]
+
+    return Results_arr, assigned_mean, assigned_SD
 
 
-def Qc_Plot(Plot_Mean_SD_df,val):
+def Qc_Plot(testCode,qcLotNum,qcName,qcLevel,CalcMeanShow):
     Results_arr = []
-    Results_arr,Assigned_mean,Assigned_SD = Get_QC_Results_data(Plot_Mean_SD_df)
+    Results_arr,Assigned_mean,Assigned_SD = Get_QC_Results_data(testCode,qcLotNum,qcName,qcLevel)
     X_axis = [i for i in range(len(Results_arr))]
     Ass_Mean = [ Assigned_mean for i in range(len(Results_arr))]
     calc_Mean = Data_Mean(Results_arr)
@@ -380,7 +690,7 @@ def Qc_Plot(Plot_Mean_SD_df,val):
     N_One_SD = [ (Assigned_mean - Assigned_SD) for i in range(len(Results_arr))]
     N_Two_SD = [ (Assigned_mean - 2*Assigned_SD) for i in range(len(Results_arr))]
     N_Three_SD = [ (Assigned_mean - 3*Assigned_SD) for i in range(len(Results_arr))]
- 
+
     trace1 = go.Scatter(
         x=X_axis, 
         y=Results_arr,
@@ -466,7 +776,7 @@ def Qc_Plot(Plot_Mean_SD_df,val):
         y=calc_Mean_line,
         name = 'Calculated Mean',
         mode="lines",  
-        opacity=0.4,
+        opacity=0.6,
         line=dict(width=1.1,  #line styling
                     color='darkgreen', 
                     dash='solid')
@@ -477,13 +787,13 @@ def Qc_Plot(Plot_Mean_SD_df,val):
     #     data = [trace1, trace2, trace3, trace4,trace5, trace6, trace7, trace8]
     # else :
     #     data = [trace1, trace2, trace9, trace3, trace4,trace5, trace6, trace7, trace8]
-    if val == "Hide":
+    if CalcMeanShow == "Hide":
         data = [trace1, trace2, trace3, trace4,trace5, trace6, trace7, trace8]
-    elif val == "Show" :
+    elif CalcMeanShow == "Show" :
         data = [trace1, trace2, trace9, trace3, trace4,trace5, trace6, trace7, trace8]
     
     layout = go.Layout(
-        title = 'Control chart',
+        title = "QC Chart "+ qcLevel,
         xaxis = dict(
             showgrid = False,
             zeroline = True,
@@ -511,286 +821,72 @@ def Qc_Plot(Plot_Mean_SD_df,val):
 
     return fig ,Results_arr
 
-# Checkbox if the user want to show Calculated mean
-DrawCalcMeanOption = html.Div([
- 
-    dbc.Label('Calculated Mean Line'),
-    dcc.RadioItems(
-                id='Draw_calc_Mean_option',
-                options=[{'label': i, 'value': i} for i in ['Show', 'Hide']],
-                value='Hide',
-                labelStyle={'display': 'block',"text-align": "center"}
-            )
-])
-
-
-# --------------------------------------------------------------Nav Bar---------------------------------------
-
-# make a reuseable navitem for the different examples
-nav_item = dbc.NavItem(dbc.NavLink(
-    'Home', href="#", style={"color": "#caccce"},))
-nav_item2 = dbc.NavItem(dbc.NavLink(
-    'Results', href="#", style={"color": "#caccce"},))
-
-# make a reuseable dropdown for the different examples
-dropdown = dbc.DropdownMenu(
-    children=[
-        dbc.DropdownMenuItem(
-            "more pages", header=True),
-        dbc.DropdownMenuItem(
-            "anything", href="#", style={'color': '#caccce', 'hover': {'color': '#2e4d61'}})
-    ],
-    nav=True,
-    in_navbar=True,
-    label="Menu",
-)
-
-NavBar = dbc.Navbar(
-    dbc.Container(
-        [
-            html.A(
-                # Use row and col to control vertical alignment of logo / brand
-                dbc.Row(
-                    [
-                        dbc.Col(html.Img(src=Logo, height="50px")),
-                        dbc.Col(dbc.NavbarBrand(html.H4("SQC Module", className="ml-2",
-                                                        style={'font-weight': 'bold', 'color': '#caccce', }))),
-                    ],
-                    align="center",
-                    no_gutters=True,
-                ),
-                href="#",
-            ),
-            dbc.NavbarToggler(id="navbar-toggler2", n_clicks=0),
-            dbc.Collapse(
-                dbc.Nav(
-                    [nav_item, nav_item2, dropdown], className="ml-auto", navbar=True
-                ),
-                id="navbar-collapse2",
-                navbar=True,
-            ),
-        ],
-        fluid=True,
-    ),
-    color="#2e4d61",
-    dark=True,
-    className="mb-10",
-)
-
-
-# -----------------------------------------------------------Whole Page-------------------------------------------------------------
-
-# Call app cards
-app.layout = dbc.Container(
+def graph_card(fig):
+    graph = dbc.Col(dbc.Card(
     [
-        dbc.Row(dbc.Col(NavBar, md=12)),
-        dbc.Row(
-            [
-                # Filters card
-                dbc.Col([
-                    dbc.Card(
-                        [                            
-                            dbc.Col(space),
-                            dbc.Col(Duration),
-                            dbc.Col(Lab_control),
-                            dbc.Col(Analyzer_control,),
-                            dbc.Col(Test_control),
-                            dbc.Col(QC),
-                            dbc.Col(plotButton),
-                            dbc.Col(space)
-                        ],
-                        body=True,
-                        style={'height': '85%',"overflowY": "scroll"}
-                        # className = "shadow-sm p-3 mb-5 bg-white rounded"
-                    )
-                ], md=4),
-
-                # Calculations and plot card
-                dbc.Col([
-                    dbc.Col(Calculations),
-                    dbc.Col(space),
-                    dbc.Card(
-                        [
-                            dcc.Graph(id="cluster-graph",
-                            ),
-                            html.Hr(
-                                # style={"margin-top": "-1em"}
-                            ),
-                            dbc.Col(
-                                DrawCalcMeanOption
-                            ,
-                            md=4,
-                            style= {"text-align": "center"}
-                            ),
-                        ],
-                        body=True,
-                        className = "shadow-sm p-3 mb-5 bg-white rounded",
-                        style={"margin-top": "-3em"}
-                    )
-
-                ], md=8),
-            ],
-            align="top",
-            style={"margin-top": "1rem", "padding-bottom": "1rem"}
+        dbc.Col(space),
+        dcc.Graph(id='level_graph' ,figure = fig),
+        html.Hr(
+            # style={"margin-top": "-1em"}
         ),
+        dbc.Col(
+            DrawCalcMeanOption
+        ,md=4,
+        style= {"text-align": "center"}
+        ),
+        dbc.Col(space),
     ],
-    style={"background-color": "#eaeaea", "height": "100%", "position": 'flex'},
-    fluid=True,
+    body=True,
+    className = "shadow-sm p-3 mb-5 bg-white rounded",
+    style={"margin-top": "-2em"}
+    ), md = 12)
 
-)
-
-# --------------------------------------------------------------------Functions------------------------------------------
-
-# Navbar
-
-
-@app.callback(
-    Output("navbar-collapse", "is_open"),
-    [Input("navbar-toggler", "n_clicks")],
-    # [State("navbar-collapse", "is_open")],
-)
-def toggle_navbar_collapse(n, is_open):
-    if n:
-        return not is_open
-    return is_open
-
-
-# Select period Function
-@app.callback(
-    dash.dependencies.Output('output-container-date-picker-range', 'children'),
-    [dash.dependencies.Input('my-date-picker-range', 'start_date'),
-     dash.dependencies.Input('my-date-picker-range', 'end_date')])
-def update_output(start_date, end_date):
-    string_prefix = ''
-    if start_date is not None:
-        start_date_object = date.fromisoformat(start_date)
-        start_date_string = start_date_object.strftime('%B %d, %Y')
-        string_prefix = string_prefix + 'Start Date: ' + start_date_string + ' | '
-    if end_date is not None:
-        end_date_object = date.fromisoformat(end_date)
-        end_date_string = end_date_object.strftime('%B %d, %Y')
-        string_prefix = string_prefix + 'End Date: ' + end_date_string
-    if len(string_prefix) == len(''):
-        return 'Select a date to see it displayed here'
-    else:
-        return string_prefix
-
-
-
-lab_branch_var = 'GTS'
-def update_dropdown_options(key, var, condition = 0):
-    options_arr = []
-    print('var: ', var)
-    if key == 1:
-        mycursor.execute("SELECT DISTINCT lab_unit FROM Lab JOIN Analyzer on analyzer_id = a_id WHERE lab_branch = %s", (var,))
-    elif key == 2:
-        mycursor.execute("SELECT analyzer_name FROM Lab JOIN Analyzer on analyzer_id = a_id WHERE lab_unit = %s AND lab_branch = %s", (var, condition,))
-    elif key == 3:
-        mycursor.execute("SELECT test_name FROM test_analyzer JOIN Test ON test_code = t_code JOIN Analyzer ON analyzer_id = a_id WHERE analyzer_name =  %s", (var,))
-    myresult = mycursor.fetchall()
-    for i in myresult:
-        options_arr.append(i[0])
-    return options_arr
-
-
-@app.callback(
-    Output('Lab_unit', 'options'),
-    Output('Lab_unit', 'disabled'),
-    # Output('Analyzer_Name', 'options'),
-    # Output('Analyzer_Name', 'disabled'),
-    # Output('Test_Name', 'options'),
-    # Output('Test_Name', 'disabled'),
-    # Output('Qc_lot_number', 'options'),
-    # Output('Qc_lot_number', 'disabled'),
-    # Output('Qc_Name', 'options'),
-    # Output('Qc_Name', 'disabled'),
-    # Output('Qc_level', 'options'),
-    # Output('Qc_level', 'disabled'),
-    Input('Lab_branch', 'value'),
-)
-def update_unit_dropdowns(name):
-    arr = []
-    lab_branch_var = name
-    if name == None:
-        return dash.no_update, True
-        
-    arr = update_dropdown_options(1, name)
-
-    return [{'label': j, 'value': j} for j in arr], False
-
-@app.callback(
-    Output('Analyzer_Name', 'options'),
-    Output('Analyzer_Name', 'disabled'),
-    # Output('Test_Name', 'options'),
-    # Output('Test_Name', 'disabled'),
-    # Output('Qc_lot_number', 'options'),
-    # Output('Qc_lot_number', 'disabled'),
-    # Output('Qc_Name', 'options'),
-    # Output('Qc_Name', 'disabled'),
-    # Output('Qc_level', 'options'),
-    # Output('Qc_level', 'disabled'),
-    # Input('Lab_branch', 'value'),
-    Input('Lab_unit', 'value'),
-    Input('Lab_branch', 'value'),
-
-)
-def update_analyzer_name_dropdowns(unit, branch):
-    arr = []
-
-    if unit == None:
-        return dash.no_update, True
-
-    arr = update_dropdown_options(2, unit, branch)
-
-    return [{'label': j, 'value': j} for j in arr], False
-
-
+    return graph
 
 # Calculate Button Function
-@app.callback(Output('Mean_Table', 'children'),
-            Output('CV_Table', 'children'),
-            Output('cluster-graph', 'figure'),
+@app.callback(
+            # Output('Mean_Table', 'children'),
+            # Output('CV_Table', 'children'),
+            Output('graph_container', 'children'),
+            # Output('initial_graph', 'children'),
             Input('Plot_Button', 'n_clicks'),
-            Input('Draw_calc_Mean_option', 'value'))
-def Calculate(n_clicks,val):
+            Input('Draw_calc_Mean_option', 'value'),
+            State('myresult_test_memory', 'data'),
+            State('myresult_qc_lot_num_memory', 'data'),
+            State('QC_Name', 'value'),
+            State('QC_Level', 'value'),
+            prevent_initial_call = True)
+            
+def Calculate(n_clicks,CalcMeanShow,testCode,qcLotNum,qcName,qcLevel):
     MeanTableData=[]
     CvTableData=[]
     Calculations_data= []
     QC_Results = []
+    for i in testCode:
+        t = i[1]
+    testCode = t
+    qcLotNum = qcLotNum[0]
     # ctx = dash.callback_context
     # input_id = ctx.triggered[0]["prop_id"].split(".")[0]
-    # print(input_id)
 
     if n_clicks == 0:
         MeanTableData = Mean_Table_Data
         CvTableData = CV_Table_Data
 
         return html.Tbody(MeanTableData),html.Tbody(CvTableData),go.Figure([])
-    
+    fig_arr = []
     if n_clicks > 0 :
-        
-        fig, QC_Results =Qc_Plot(Plot_Mean_SD_df,val)
-        
+        for i in qcLevel:
+            fig, QC_Results =Qc_Plot(testCode,qcLotNum,qcName,i,CalcMeanShow)
+            fig_arr.append(graph_card(fig))
+
         Calculations_data = Calculate_All(QC_Results)
         Mean_Table_values[1],Mean_Table_values[3] = Calculations_data[0],Calculations_data[1]
         CV_Table_values[0],CV_Table_values[1] = Calculations_data[2],Calculations_data[3]
         MeanTableData,CvTableData = Updata_Calcs_Table_Data(Mean_Table_values,CV_Table_values)
    
-    return html.Tbody(MeanTableData),html.Tbody(CvTableData),fig
-
-# @app.callback(Output('cluster-graph', 'figure'),
-#             Input('DrawCalcMeanOption', 'value'))
-# def update_graph(value):
-
-   
-
-#     else :
-        
-
-#     return fig
-
-# def generate_controlChart(interval,) 
-
+    # return html.Tbody(MeanTableData),html.Tbody(CvTableData),fig_arr
+    return fig_arr
 
 
 
