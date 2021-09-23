@@ -80,10 +80,29 @@ CV_Table_Data = [
     html.Tr([html.Td(CV_Table_cols[1],className="table-active"),html.Td(CV_Table_values[1])])
 ]
 
-
+graph_calcs=[
+                html.Tr( [html.Th('Assigned Mean'), html.Th(Mean_Table_values[0],style={'font-weight':'normal','border-right':'1px solid #B3B6B7'}),html.Th("Calculated Mean"), html.Th(Mean_Table_values[1],style={'font-weight':'normal'})], style={'font-size':'small','border-bottom':'1px solid #B3B6B7'} ),
+                html.Tr( [html.Td('Assigned SD',style={'font-weight':'bold'}),html.Td(Mean_Table_values[2],style={'border-right':'1px solid #B3B6B7'}),html.Td('Calculated SD',style={'font-weight':'bold'}),html.Td(Mean_Table_values[3])]),
+                
+            ]
 
 # function that updates table data
+# def Updata_Calcs_Table_Data(MeanTableValuesArray,CVTableValuesArray):
+#     Mean_Table_Data = [
+#     html.Tr([html.Td(Mean_Table_cols[0],className="table-active"),html.Td(Mean_Table_values[0]),html.Td(Mean_Table_cols[1],className="table-active"),html.Td(MeanTableValuesArray[1])]), 
+#     html.Tr([html.Td(Mean_Table_cols[2],className="table-active"),html.Td(Mean_Table_values[2]),html.Td(Mean_Table_cols[3],className="table-active"),html.Td(MeanTableValuesArray[3])])
+#     ]
+#     CV_Table_Data = [
+#     html.Tr([html.Td(CV_Table_cols[0],className="table-active"),html.Td(CVTableValuesArray[0])]), 
+#     html.Tr([html.Td(CV_Table_cols[1],className="table-active"),html.Td(CVTableValuesArray[1])])
+# ]    
+#     return Mean_Table_Data,CV_Table_Data
 def Updata_Calcs_Table_Data(MeanTableValuesArray,CVTableValuesArray):
+    graph_calcs=[
+                html.Tr( [html.Th('Assigned Mean'), html.Th(Mean_Table_values[0],style={'font-weight':'normal','border-right':'1px solid #B3B6B7'}),html.Th("Calculated Mean"), html.Th(Mean_Table_values[1],style={'font-weight':'normal'})], style={'font-size':'small','border-bottom':'1px solid #B3B6B7'} ),
+                html.Tr( [html.Td('Assigned SD',style={'font-weight':'bold'}),html.Td(Mean_Table_values[2],style={'border-right':'1px solid #B3B6B7'}),html.Td('Calculated SD',style={'font-weight':'bold'}),html.Td(Mean_Table_values[3])]),
+                
+            ]
     Mean_Table_Data = [
     html.Tr([html.Td(Mean_Table_cols[0],className="table-active"),html.Td(Mean_Table_values[0]),html.Td(Mean_Table_cols[1],className="table-active"),html.Td(MeanTableValuesArray[1])]), 
     html.Tr([html.Td(Mean_Table_cols[2],className="table-active"),html.Td(Mean_Table_values[2]),html.Td(Mean_Table_cols[3],className="table-active"),html.Td(MeanTableValuesArray[3])])
@@ -92,7 +111,7 @@ def Updata_Calcs_Table_Data(MeanTableValuesArray,CVTableValuesArray):
     html.Tr([html.Td(CV_Table_cols[0],className="table-active"),html.Td(CVTableValuesArray[0])]), 
     html.Tr([html.Td(CV_Table_cols[1],className="table-active"),html.Td(CVTableValuesArray[1])])
 ]    
-    return Mean_Table_Data,CV_Table_Data
+    return graph_calcs,CV_Table_Data
 
 # Main Application page
 app = dash.Dash('Hello World', external_stylesheets=[
@@ -316,35 +335,37 @@ plotButton = dbc.Button("Calculate and Plot", id='Plot_Button',n_clicks = 0, out
                         )
 
 # Table of calculations
-Calculations = dbc.Card(
-    [
-        dbc.Label(html.H4("Calculations", className="ml-2",
-                          style={'font-weight': 'bold', 'color': '#caccce', })),
-        dbc.Col(space),
-        dbc.Col(space),
-        dbc.Row([
-            dbc.Col([
-                dbc.Table(html.Tbody(Mean_Table_Data),id = 'Mean_Table',bordered = True,responsive = True, 
-                size = 'sm',
-                style = {'font-size':'small','text-align': 'center'}
-                )   
-                ],
-            md=5)
-            ,
-            dbc.Col([
-                dbc.Table(html.Tbody(CV_Table_Data),id = 'CV_Table',bordered = True,responsive = True,
-                size = 'sm', 
-                style = {'font-size':'small','text-align': 'center'}
-                )], 
-            md=4)
-            ,
-        ]),    
-    ],
-    body=True,
-    className=cardShadow[0],
-    style={"width": "100%"}
+Calculations = dbc.Table(html.Tbody(graph_calcs),  id='Mean_Table',borderless = True,responsive = True, size = 'sm',
+                        style = {'font-size':'small','width':'50%'} )
+# Calculations = dbc.Card(
+#     [
+#         dbc.Label(html.H4("Calculations", className="ml-2",
+#                           style={'font-weight': 'bold', 'color': '#caccce', })),
+#         dbc.Col(space),
+#         dbc.Col(space),
+#         dbc.Row([
+#             dbc.Col([
+#                 dbc.Table(html.Tbody(Mean_Table_Data),id = 'Mean_Table',bordered = True,responsive = True, 
+#                 size = 'sm',
+#                 style = {'font-size':'small','text-align': 'center'}
+#                 )   
+#                 ],
+#             md=5)
+#             ,
+#             dbc.Col([
+#                 dbc.Table(html.Tbody(CV_Table_Data),id = 'CV_Table',bordered = True,responsive = True,
+#                 size = 'sm', 
+#                 style = {'font-size':'small','text-align': 'center'}
+#                 )], 
+#             md=4)
+#             ,
+#         ]),    
+#     ],
+#     body=True,
+#     className=cardShadow[0],
+#     style={"width": "100%"}
 
-)
+# )
 
 # Checkbox if the user want to show Calculated mean
 DrawCalcMeanOption = html.Div([
@@ -449,10 +470,10 @@ app.layout = dbc.Container(
 
                 # Calculations and plot card
                 dbc.Col([
-                    dbc.Col(Calculations),
                     dbc.Col(space),
                     dbc.Card( 
                             [
+                                dbc.Col(Calculations),
                                 html.Div(
                                 dcc.Graph(id="cluster-graph",
                                 )
@@ -838,7 +859,7 @@ def Qc_Plot(testCode,qcLotNum,qcName,qcLevel,CalcMeanShow,Duration):
     )
     fig = go.Figure(data = data ,layout = layout)
 
-    return fig ,Results_arr
+    return fig ,Results_arr,Assigned_mean,Assigned_SD
 
 def graph_card(fig):
     graph = html.Div(
@@ -854,7 +875,7 @@ def graph_card(fig):
 
 # Calculate Button Function
 @app.callback(
-            # Output('Mean_Table', 'children'),
+            Output('Mean_Table', 'children'),
             # Output('CV_Table', 'children'),
             Output('graph_container', 'children'),
             # Output('initial_graph', 'children'),
@@ -869,7 +890,7 @@ def graph_card(fig):
             
 def Calculate(n_clicks,CalcMeanShow,testCode,qcLotNum,qcName,qcLevel,Duration):
     MeanTableData=[]
-    CvTableData=[]
+    # CvTableData=[]
     Calculations_data= []
     QC_Results = []
     for i in testCode:
@@ -880,24 +901,24 @@ def Calculate(n_clicks,CalcMeanShow,testCode,qcLotNum,qcName,qcLevel,Duration):
     # input_id = ctx.triggered[0]["prop_id"].split(".")[0]
 
     if n_clicks == 0:
-        MeanTableData = Mean_Table_Data
-        CvTableData = CV_Table_Data
+        MeanTableData = graph_calcs
+        # CvTableData = CV_Table_Data
 
-        return html.Tbody(MeanTableData),html.Tbody(CvTableData),go.Figure([])
+        return html.Tbody(MeanTableData),go.Figure([])
     fig_arr = []
     if n_clicks > 0 :
         for i in qcLevel:
-            fig, QC_Results =Qc_Plot(testCode,qcLotNum,qcName,i,CalcMeanShow,Duration)
+            fig, QC_Results,Assigned_mean,Assigned_SD =Qc_Plot(testCode,qcLotNum,qcName,i,CalcMeanShow,Duration)
             fig_arr.append(graph_card(fig))
 
         Calculations_data = Calculate_All(QC_Results)
+        Mean_Table_values[0],Mean_Table_values[2] = Assigned_mean,Assigned_SD
         Mean_Table_values[1],Mean_Table_values[3] = Calculations_data[0],Calculations_data[1]
         CV_Table_values[0],CV_Table_values[1] = Calculations_data[2],Calculations_data[3]
         MeanTableData,CvTableData = Updata_Calcs_Table_Data(Mean_Table_values,CV_Table_values)
    
     # return html.Tbody(MeanTableData),html.Tbody(CvTableData),fig_arr
-    return fig_arr
-
+    return  html.Tbody(MeanTableData),fig_arr
 
 
 if __name__ == '__main__':
