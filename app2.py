@@ -66,7 +66,7 @@ CV_Table_cols = ['CV %', 'MU Measurments']
 # tableCols = [Analyzer_df.analyzer_name[0],Analyzer_df.analyzer_name[1], Analyzer_df.analyzer_name[2]]
 
 # Array of table values
-Mean_Table_values = [16.9,0,2,0]
+Mean_Table_values = [0,0,0,0]
 CV_Table_values = [0,0]
 
 
@@ -306,7 +306,6 @@ QC = dbc.Card(
                     id='QC_Name',
                     options=[
                         {"label": col, "value": col}for col in QC_df.qc_name],
-                    value="QC_name",
                     disabled = True,
                     placeholder='Select QC Name'
                 ),
@@ -315,7 +314,6 @@ QC = dbc.Card(
                     id='QC_Level',
                     options=[
                         {"label": col, "value": col}for col in iris.columns],
-                    value="QC_level",
                     multi=True,
                     disabled = True,
                     placeholder='Select QC Level'
@@ -329,14 +327,18 @@ QC = dbc.Card(
 )
 
 # Calculate Statistical calculations and plot control chart
-plotButton = dbc.Button("Calculate and Plot", id='Plot_Button',n_clicks = 0, outline=True, color='secondary', block=True,
+plotButton = dbc.Button("Calculate and Plot", 
+                        id='Plot_Button',n_clicks = 0, outline=True, color='secondary', block=True,
                         style={'background-color': '#2D4D61 !important',
                                "margin-top": "-1em"}
                         )
 
 # Table of calculations
-Calculations = dbc.Table(html.Tbody(graph_calcs),  id='Mean_Table',borderless = True,responsive = True, size = 'sm',
-                        style = {'font-size':'small','width':'50%'} )
+Calculations = dbc.Card([
+                        dbc.Col(space),
+                        dbc.Table(html.Tbody(graph_calcs),  id='Mean_Table',borderless = True,responsive = True, size = 'sm',
+                        style = {'font-size':'small','width':'50%','margin-left':'15px'} )
+                        ])
 # Calculations = dbc.Card(
 #     [
 #         dbc.Label(html.H4("Calculations", className="ml-2",
@@ -447,6 +449,7 @@ app.layout = dbc.Container(
         dbc.Row(dbc.Col(NavBar, md=12)),
         dbc.Row(
             [
+                
                 # Filters card
                 dbc.Col([
                     dbc.Card(
@@ -464,6 +467,11 @@ app.layout = dbc.Container(
                             dbc.Col(Test_control),
                             dbc.Col(QC),
                             dbc.Col(plotButton),
+                            dcc.ConfirmDialog(
+                            id='error-message',
+                            displayed = False,
+                            message='Data Not Found'
+                            ),
                             dbc.Col(space)
                         ],
                         body=True,
@@ -478,20 +486,20 @@ app.layout = dbc.Container(
                     dbc.Col(space),
                     dbc.Card( 
                             [
+                                dbc.Col(space),
                                 dbc.Col(Calculations),
+                                dbc.Col(space),
                                 html.Div(
                                 dbc.Card(
-                                dcc.Graph(id="cluster-graph",
-                                ))
-                                ,id = "graph_container"),
+                                dcc.Graph(id="cluster-graph",)
+                                ),
+                                id = "graph_container"),
                                 html.Hr(
-                                    # style={"margin-top": "-1em"}
+                                # style={"margin-top": "-1em"}
                                 ),
                                 dbc.Col(
                                     DrawCalcMeanOption()
-                                ,
-                                md=4,
-                                style= {"text-align": "center"}
+                                ,md=4, style= {"text-align": "center"}
                                 ),
                             ],
                             id = 'initial_graph',
@@ -554,15 +562,6 @@ def update_output(start_date, end_date):
         arr=[start_date_object,end_date_object]
         return string_prefix,arr
 
-# def Update_DateRange(start,end):
-#     options_arr = []
-#     mycursor.execute("SELECT qc_date FROM test_qc_results  WHERE ( qc_date between %s and %s)",(start,end))
-#     # >= %s AND To_date <= %s", (start,end))
-#     myresult = mycursor.fetchall()
-#     for i in myresult:
-#         options_arr.append(i[0])
-#     # print (date)
-#     return options_arr
 
 ########################################################  START OF FILTERS  ########################################################
 ######################################################## To update lab unit ########################################################
@@ -725,6 +724,10 @@ def Get_QC_Results_data(testCode, qcLotNum, qcName, qcLevel,Duration):
 def Qc_Plot(testCode,qcLotNum,qcName,qcLevel,CalcMeanShow,Duration):
     Results_arr = []
     Results_arr,Assigned_mean,Assigned_SD,Date_arr = Get_QC_Results_data(testCode,qcLotNum,qcName,qcLevel,Duration)
+
+    if len(Results_arr)==0:
+        return 0,0,0,0
+
     X_axis = [Date for Date in Date_arr]
     Ass_Mean = [ Assigned_mean for i in range(len(Results_arr))]
     calc_Mean = Data_Mean(Results_arr)
@@ -827,11 +830,6 @@ def Qc_Plot(testCode,qcLotNum,qcName,qcLevel,CalcMeanShow,Duration):
                     dash='solid')
     )
      
-    
-    # if val == None :
-    #     data = [trace1, trace2, trace3, trace4,trace5, trace6, trace7, trace8]
-    # else :
-    #     data = [trace1, trace2, trace9, trace3, trace4,trace5, trace6, trace7, trace8]
     if CalcMeanShow == "Hide":
         data = [trace1, trace2, trace3, trace4,trace5, trace6, trace7, trace8]
     elif CalcMeanShow == "Show" :
@@ -853,15 +851,6 @@ def Qc_Plot(testCode,qcLotNum,qcName,qcLevel,CalcMeanShow,Duration):
             showline = True ,
 
         )
-        # ,
-        # yaxis2 = dict(
-        #     title = 'log',
-        #     zeroline = True,
-        #     showline = True,
-        #     overlaying = 'y',
-        #     side = 'right',
-        #     color = 'red'
-        # )
     )
     fig = go.Figure(data = data ,layout = layout)
 
@@ -873,12 +862,6 @@ def graph_card(fig):
         dbc.Col(space),
         dbc.Card([
         dcc.Graph(id='level_graph' ,figure = fig),
-        # dbc.Col(
-        #         DrawCalcMeanOption()
-        #         ,
-        #         md=4,
-        #         style= {"text-align": "center"}
-        #         ),
         ],),
         dbc.Col(space),
     ])
@@ -890,7 +873,8 @@ def graph_card(fig):
             Output('Mean_Table', 'children'),
             # Output('CV_Table', 'children'),
             Output('graph_container', 'children'),
-            # Output('initial_graph', 'children'),
+            Output('error-message', 'displayed'),
+            Output('error-message', 'message'),
             Input('Plot_Button', 'n_clicks'),
             Input('Draw_calc_Mean_option0', 'value'),
             State('myresult_test_memory', 'data'),
@@ -902,9 +886,16 @@ def graph_card(fig):
             
 def Calculate(n_clicks,CalcMeanShow,testCode,qcLotNum,qcName,qcLevel,Duration):
     MeanTableData=[]
-    # CvTableData=[]
+    MeanTableData = graph_calcs
     Calculations_data= []
     QC_Results = []
+    displayed = False
+    Message = ""
+    # CvTableData=[]
+    
+    if not (testCode and qcLotNum and qcName and qcLevel and Duration) :
+        return   html.Tbody(MeanTableData),dcc.Graph(),True,"Please Choose All Data"
+
     for i in testCode:
         t = i[1]
     testCode = t
@@ -913,24 +904,29 @@ def Calculate(n_clicks,CalcMeanShow,testCode,qcLotNum,qcName,qcLevel,Duration):
     # input_id = ctx.triggered[0]["prop_id"].split(".")[0]
 
     if n_clicks == 0:
-        MeanTableData = graph_calcs
         # CvTableData = CV_Table_Data
-
-        return html.Tbody(MeanTableData),go.Figure([])
-    fig_arr = []
+        return html.Tbody(MeanTableData),dcc.Graph(),False,""
+    
     if n_clicks > 0 :
+        fig_arr = []
         for i in qcLevel:
             fig, QC_Results,Assigned_mean,Assigned_SD =Qc_Plot(testCode,qcLotNum,qcName,i,CalcMeanShow,Duration)
-            fig_arr.append(graph_card(fig))
 
-        Calculations_data = Calculate_All(QC_Results)
-        Mean_Table_values[0],Mean_Table_values[2] = Assigned_mean,Assigned_SD
-        Mean_Table_values[1],Mean_Table_values[3] = Calculations_data[0],Calculations_data[1]
-        CV_Table_values[0],CV_Table_values[1] = Calculations_data[2],Calculations_data[3]
-        MeanTableData,CvTableData = Updata_Calcs_Table_Data(Mean_Table_values,CV_Table_values)
-   
+            if fig == 0 :
+                displayed = True
+                fig_arr.append(graph_card({}))
+                Message = "Data Not Found"
+                # return   html.Tbody(MeanTableData),,displayed ,
+            else :
+                fig_arr.append(graph_card(fig))
+                Calculations_data = Calculate_All(QC_Results)
+                Mean_Table_values[0],Mean_Table_values[2] = Assigned_mean,Assigned_SD
+                Mean_Table_values[1],Mean_Table_values[3] = Calculations_data[0],Calculations_data[1]
+                CV_Table_values[0],CV_Table_values[1] = Calculations_data[2],Calculations_data[3]
+                MeanTableData,CvTableData = Updata_Calcs_Table_Data(Mean_Table_values,CV_Table_values)
+           
     # return html.Tbody(MeanTableData),html.Tbody(CvTableData),fig_arr
-    return  html.Tbody(MeanTableData),fig_arr
+    return  html.Tbody(MeanTableData), fig_arr, displayed, Message
 
 
 if __name__ == '__main__':
