@@ -12,6 +12,7 @@ import dash_html_components as html
 import csv
 from datetime import date
 import dash_table
+from numpy.core.arrayprint import printoptions
 from numpy.core.fromnumeric import size
 import pandas as pd
 from datetime import datetime as dt
@@ -896,40 +897,44 @@ def Calculate(n_clicks,CalcMeanShow,testCode,qcLotNum,qcName,qcLevel,Duration):
     QC_Results = []
     displayed = False
     Message = ""
-    table_arr = []
+    fig_arr = []
     # CvTableData=[]
     
     if not (testCode and qcLotNum and qcName and qcLevel and Duration) :
-        return   html.Tbody(MeanTableData),dcc.Graph(),True,"Please Choose All Data"
+        displayed = True
+        fig_arr.append(graph_card({},graph_calcs))
+        Message = "Please Choose All Data"
+        # return   html.Tbody(MeanTableData),dcc.Graph(),True,
 
-    for i in testCode:
-        t = i[1]
-    testCode = t
-    qcLotNum = qcLotNum[0]
-    # ctx = dash.callback_context
-    # input_id = ctx.triggered[0]["prop_id"].split(".")[0]
+    else :
+        for i in testCode:
+            t = i[1]
+        testCode = t
+        qcLotNum = qcLotNum[0]
+        # ctx = dash.callback_context
+        # input_id = ctx.triggered[0]["prop_id"].split(".")[0]
 
-    if n_clicks == 0:
-        # CvTableData = CV_Table_Data
-        return html.Tbody(MeanTableData),dcc.Graph(),False,""
-    
-    if n_clicks > 0 :
-        fig_arr = []
-        for i in qcLevel:
-            fig, QC_Results,Assigned_mean,Assigned_SD =Qc_Plot(testCode,qcLotNum,qcName,i,CalcMeanShow,Duration)
+        if n_clicks == 0:
+            # CvTableData = CV_Table_Data
+            return html.Tbody(MeanTableData),dcc.Graph(),False,""
+        
+        if n_clicks > 0 :
+            fig_arr = []
+            for i in qcLevel:
+                fig, QC_Results,Assigned_mean,Assigned_SD =Qc_Plot(testCode,qcLotNum,qcName,i,CalcMeanShow,Duration)
 
-            if fig == 0 :
-                displayed = True
-                fig_arr.append(graph_card({}))
-                Message = "Data Not Found"
-                # return   html.Tbody(MeanTableData),,displayed ,
-            else :
-                Calculations_data = Calculate_All(QC_Results)
-                Mean_Table_values[0],Mean_Table_values[2] = Assigned_mean,Assigned_SD
-                Mean_Table_values[1],Mean_Table_values[3] = Calculations_data[0],Calculations_data[1]
-                CV_Table_values[0],CV_Table_values[1] = Calculations_data[2],Calculations_data[3]
-                MeanTableData,CvTableData = Updata_Calcs_Table_Data(Mean_Table_values,CV_Table_values)
-                fig_arr.append(graph_card(fig,MeanTableData))
+                if fig == 0 :
+                    displayed = True
+                    fig_arr.append(graph_card({},graph_calcs))
+                    Message = "Data Not Found"
+                    # return   html.Tbody(MeanTableData),,displayed ,
+                else :
+                    Calculations_data = Calculate_All(QC_Results)
+                    Mean_Table_values[0],Mean_Table_values[2] = Assigned_mean,Assigned_SD
+                    Mean_Table_values[1],Mean_Table_values[3] = Calculations_data[0],Calculations_data[1]
+                    CV_Table_values[0],CV_Table_values[1] = Calculations_data[2],Calculations_data[3]
+                    MeanTableData,CvTableData = Updata_Calcs_Table_Data(Mean_Table_values,CV_Table_values)
+                    fig_arr.append(graph_card(fig,MeanTableData))
            
     # return html.Tbody(MeanTableData),html.Tbody(CvTableData),fig_arr
     return  html.Tbody(MeanTableData), fig_arr, displayed, Message
