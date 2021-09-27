@@ -333,12 +333,15 @@ plotButton = dbc.Button("Calculate and Plot",
                                "margin-top": "-1em"}
                         )
 
-# Table of calculations
-Calculations = dbc.Card([
-                        dbc.Col(space),
-                        dbc.Table(html.Tbody(graph_calcs),  id='Mean_Table',borderless = True,responsive = True, size = 'sm',
-                        style = {'font-size':'small','width':'50%','margin-left':'15px'} )
-                        ])
+# Create Table of calculations
+
+def creat_calc_table(graph_calcs):
+    Calculations = dbc.Card([
+                            dbc.Col(space),
+                            dbc.Table(html.Tbody(graph_calcs),  id='Mean_Table',borderless = True,responsive = True, size = 'sm',
+                            style = {'font-size':'small','width':'50%','margin-left':'15px'} )
+                            ])
+    return Calculations
 # Calculations = dbc.Card(
 #     [
 #         dbc.Label(html.H4("Calculations", className="ml-2",
@@ -401,7 +404,7 @@ dropdown = dbc.DropdownMenu(
         dbc.DropdownMenuItem(
             "more pages", header=True),
         dbc.DropdownMenuItem(
-            "anything", href="#", style={'color': '#caccce', 'hover': {'color': '#2e4d61'}})
+            "Add QC", href="#", style={'color': '#caccce', 'hover': {'color': '#2e4d61'}})
     ],
     nav=True,
     in_navbar=True,
@@ -486,13 +489,14 @@ app.layout = dbc.Container(
                     dbc.Col(space),
                     dbc.Card( 
                             [
-                                dbc.Col(space),
-                                dbc.Col(Calculations),
-                                dbc.Col(space),
+                                
                                 html.Div(
-                                dbc.Card(
+                                dbc.Card([
+                                dbc.Col(space),
+                                dbc.Col(creat_calc_table(graph_calcs)),
+                                dbc.Col(space),
                                 dcc.Graph(id="cluster-graph",)
-                                ),
+                                ]),
                                 id = "graph_container"),
                                 html.Hr(
                                 # style={"margin-top": "-1em"}
@@ -523,7 +527,6 @@ app.layout = dbc.Container(
 # --------------------------------------------------------------------Functions------------------------------------------
 
 # Navbar
-
 
 @app.callback(
     Output("navbar-collapse", "is_open"),
@@ -856,11 +859,14 @@ def Qc_Plot(testCode,qcLotNum,qcName,qcLevel,CalcMeanShow,Duration):
 
     return fig ,Results_arr,Assigned_mean,Assigned_SD
 
-def graph_card(fig):
+def graph_card(fig,graph_calcs):
     graph = html.Div(
-    [
+    [   
         dbc.Col(space),
         dbc.Card([
+        dbc.Col(space),
+        dbc.Col(creat_calc_table(graph_calcs)),
+        dbc.Col(space),
         dcc.Graph(id='level_graph' ,figure = fig),
         ],),
         dbc.Col(space),
@@ -887,10 +893,10 @@ def graph_card(fig):
 def Calculate(n_clicks,CalcMeanShow,testCode,qcLotNum,qcName,qcLevel,Duration):
     MeanTableData=[]
     MeanTableData = graph_calcs
-    Calculations_data= []
     QC_Results = []
     displayed = False
     Message = ""
+    table_arr = []
     # CvTableData=[]
     
     if not (testCode and qcLotNum and qcName and qcLevel and Duration) :
@@ -918,12 +924,12 @@ def Calculate(n_clicks,CalcMeanShow,testCode,qcLotNum,qcName,qcLevel,Duration):
                 Message = "Data Not Found"
                 # return   html.Tbody(MeanTableData),,displayed ,
             else :
-                fig_arr.append(graph_card(fig))
                 Calculations_data = Calculate_All(QC_Results)
                 Mean_Table_values[0],Mean_Table_values[2] = Assigned_mean,Assigned_SD
                 Mean_Table_values[1],Mean_Table_values[3] = Calculations_data[0],Calculations_data[1]
                 CV_Table_values[0],CV_Table_values[1] = Calculations_data[2],Calculations_data[3]
                 MeanTableData,CvTableData = Updata_Calcs_Table_Data(Mean_Table_values,CV_Table_values)
+                fig_arr.append(graph_card(fig,MeanTableData))
            
     # return html.Tbody(MeanTableData),html.Tbody(CvTableData),fig_arr
     return  html.Tbody(MeanTableData), fig_arr, displayed, Message
