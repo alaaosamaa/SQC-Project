@@ -746,7 +746,7 @@ def Get_QC_Results_data(testCode, qcLotNum, qcName, qcLevel,Duration):
 
     return Results_arr, assigned_mean, assigned_SD,qc_date
 
-def rules(arr,pSD,nSD,rule):
+def rules(arr,pSD,nSD,rule, mean = 0):
     y_arr = []
     if rule == '1-2S':
         for i in arr :
@@ -767,21 +767,55 @@ def rules(arr,pSD,nSD,rule):
                 y = arr[i]
             y_arr.append(y)
     if rule == '4-1S':
-        c = 0
+        c = 0        
         temp = []
         for i in arr:
             y = NaN
             if (i >= pSD[0] and i < pSD[1]) or (i <= nSD[0] and i > nSD[1]):
                 c += 1
                 y = i   
-            temp.append(y)            
-            if c == 4:
+            else:
                 c = 0
+            temp.append(y)
+            if c >= 4:                
+                y_arr.extend(temp)
                 temp = []
-        y_arr.extend(temp)
-        print(y_arr)     
- 
+        for i in range(len(temp)):
+            temp[i] = NaN
+        y_arr.extend(temp)  
+
+    if rule == 'xs':
+        pos_arr = positions(arr, pSD, nSD, mean)
+
+
+
     return y_arr    
+
+def positions(y_arr, pSD, nSD, mean):
+    pos = []
+    print('y_arr: ', y_arr)
+    for i in y_arr:
+        if i > mean and i < pSD[0]:
+            pos.append(1)
+        elif i > pSD[0] and i < pSD[1]:
+            pos.append(2)
+        elif i > pSD[1] and i < pSD[2]:
+            pos.append(3)
+        elif i > pSD[2]:
+            pos.append(4)
+
+        elif i < mean and i > nSD[0]:
+            pos.append(-1)
+        elif i < nSD[0] and i > nSD[1]:
+            pos.append(-2)
+        elif i < nSD[1] and i > nSD[2]:
+            pos.append(-3)
+        elif i < nSD[2]:
+            pos.append(-4)
+
+    print('positions array: ', pos)
+    return pos
+
 
 def Qc_Plot(analyzerName,testName,testCode,qcLotNum,qcName,qcLevel,CalcMeanShow,Duration,GraphRules):
     Results_arr = []
@@ -821,52 +855,44 @@ def Qc_Plot(analyzerName,testName,testCode,qcLotNum,qcName,qcLevel,CalcMeanShow,
                     dash='solid')   
         )
 
-    trace11 = go.Scatter(
+    trace_rule_1_2s = go.Scatter(
         x=X_axis, 
         y=rules(Results_arr,pSD,nSD,'1-2S'), 
-        # a.any()
         name = '1-2S Rule',
         mode = "markers",
         line={'color': 'orange'},
-        # line=dict(
-        #             color='orange', 
-        #             dash='solid')   
         )
-    trace22 = go.Scatter(
+    trace_rule_1_3s = go.Scatter(
         x=X_axis, 
         y=rules(Results_arr,pSD,nSD,'1-3S'), 
-        # a.any()
         name = '1-3S Rule',
         mode = "markers",
         line={'color': 'red'},
-        hoverinfo='skip',
-        # line=dict(
-        #             color='orange', 
-        #             dash='solid')   
+        hoverinfo='skip', 
         )
-    trace33 = go.Scatter(
+    trace_rule_2_2s = go.Scatter(
         x=X_axis, 
         y=rules(Results_arr,pSD,nSD,'2-2S'), 
-        # a.any()
         name = '2-2S Rule',
         mode = "markers",
         line={'color': 'darkorange'},
         hoverinfo='skip',
-        # line=dict(
-        #             color='orange', 
-        #             dash='solid')   
         )
-    trace44 = go.Scatter(
+    trace_rule_4_1s = go.Scatter(
         x=X_axis, 
         y=rules(Results_arr,pSD,nSD,'4-1S'), 
-        # a.any()
         name = '4-1S Rule',
         mode = "markers",
         line={'color': 'yellow'},
-        hoverinfo='skip',
-        # line=dict(
-        #             color='orange', 
-        #             dash='solid')   
+        hoverinfo='skip',  
+        )
+    trace_rule_xs = go.Scatter(
+        x=X_axis, 
+        y=rules(Results_arr,pSD,nSD,'xs', Assigned_mean), 
+        name = 'xs Rule',
+        mode = "markers",
+        line={'color': 'pink'},
+        hoverinfo='skip',  
         )
     trace2 = go.Scatter(
         x=X_axis,
@@ -950,12 +976,26 @@ def Qc_Plot(analyzerName,testName,testCode,qcLotNum,qcName,qcLevel,CalcMeanShow,
                     color='#32c896', 
                     dash='solid')
     )
-     
-    if CalcMeanShow == "Hide":
-        data = [trace1, trace11, trace22, trace33, trace44, trace2, trace3, trace4,trace5, trace6, trace7, trace8]
-    elif CalcMeanShow == "Show" :
-        data = [trace1, trace11, trace22, trace33, trace44, trace2, trace9, trace3, trace4,trace5, trace6, trace7, trace8]
     
+
+    if CalcMeanShow == "Hide":
+        data = [trace1, trace2, trace3, trace4,trace5, trace6, trace7, trace8]
+    elif CalcMeanShow == "Show" :
+        data = [trace1, trace2, trace9, trace3, trace4,trace5, trace6, trace7, trace8]
+    
+    for i in GraphRules:
+        if i == '1-2S':
+            data.append(trace_rule_1_2s)
+        if i == '1-3S':
+            data.append(trace_rule_1_3s)
+        if i == '2-2S':
+            data.append(trace_rule_2_2s)
+        if i == '4-1S':
+            data.append(trace_rule_4_1s)
+        if i == 'n-XS':
+            data.append(trace_rule_xs)
+
+
     layout = go.Layout(
         title = "QC Chart For "+ analyzerName +", Test: "+ testName + ", QC Lot Num: " + str(qcLotNum) +", QC Name: "+ qcName +", QC Level: "+ qcLevel,
         xaxis = dict(
