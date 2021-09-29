@@ -748,49 +748,48 @@ def Get_QC_Results_data(testCode, qcLotNum, qcName, qcLevel,Duration):
 
 def rules(arr,pSD,nSD,rule, mean = 0):
     y_arr = []
+    for i in range(len(arr)):
+            y_arr.append(NaN)
+    ind = []
+    pos_arr = positions(arr, pSD, nSD, mean)
+
     if rule == '1-2S':
-        for i in arr :
-            y = NaN
-            if (i >= pSD[1] and i < pSD[2]) or (i <= nSD[1] and i > nSD[2]) :
-                y = i    
-            y_arr.append(y)
-    if rule == '1-3S':
-        for i in arr :
-            y = NaN
-            if (i >= pSD[2] ) or (i <= nSD[2] ) :
-                y = i    
-            y_arr.append(y)
-    if rule == '2-2S':
         for i in range(len(arr)):
-            y_arr[i] = NaN
+            if (arr[i] >= pSD[1] and arr[i] < pSD[2]) or (arr[i] <= nSD[1] and arr[i] > nSD[2]) :
+                y_arr[i] = arr[i]
 
-        ind = []
+    if rule == '1-3S':
+        for i in range(len(arr)):
+            if (arr[i] >= pSD[2] ) or (arr[i] <= nSD[2] ) :
+                y_arr[i] = arr[i]
+
+    if rule == '2-2S':        
         for i in range(len(arr) -1):
-            y = NaN
             if (arr[i] >= pSD[1] and arr[i] < pSD[2] and arr[i+1] >= pSD[1] and arr[i+1] < pSD[2]) or (arr[i] <= nSD[1] and arr[i] > nSD[2] and arr[i+1] <= nSD[1] and arr[i+1] > nSD[2]):
-                if not ind.index(i):
+                if (not (search_arr(ind, i))):
                     ind.append(i)
-                ind.append(i+1)                    
+                ind.append(i+1)
+        for i in ind:
+            y_arr[i] = arr[i]
 
-
-            y_arr.append(y)
     if rule == '4-1S':
-        c = 0        
-        temp = []
-        for i in arr:
-            y = NaN
-            if (i >= pSD[0] and i < pSD[1]) or (i <= nSD[0] and i > nSD[1]):
-                c += 1
-                y = i   
+        cp = cn = 0
+        for i in range(len(arr)):
+            if (pos_arr[i] == 2):
+                cp += 1
+                cn = 0
+                ind.append(i)
+            elif (pos_arr[i] == -2):
+                cn += 1
+                cp = 0
+                ind.append(i)
             else:
-                c = 0
-            temp.append(y)
-            if c >= 4:                
-                y_arr.extend(temp)
-                temp = []
-        for i in range(len(temp)):
-            temp[i] = NaN
-        y_arr.extend(temp)  
+                cp = cn = 0
+                ind =[]
+            if cp >= 4 or cn >= 4:       
+                for i in ind:
+                    y_arr[i] = arr[i]
+                    
 
     if rule == 'xs':
         n = 5
@@ -798,7 +797,7 @@ def rules(arr,pSD,nSD,rule, mean = 0):
         c = 0
         temp = []
         max = c
-        print('pos_arr: ', pos_arr)
+        # print('pos_arr: ', pos_arr)
         for i in range(len(pos_arr) - 1):
             y = NaN
             if pos_arr[i] == pos_arr[i+1]:
@@ -812,17 +811,17 @@ def rules(arr,pSD,nSD,rule, mean = 0):
             temp.append(y)
 
             if ((c +1) >= n):
-                print('c: ', c)
+                # print('c: ', c)
                 y_arr.extend(temp)
                 temp = [] 
             if c < max and max +1 >= n:
-                print('max: ', max)
+                # print('max: ', max)
                 y_arr.append(arr[i])
 
         for i in range(len(temp)):
             temp[i] = NaN
         y_arr.extend(temp)
-        print('xs: ', y_arr)
+        # print('xs: ', y_arr)
 
     return y_arr    
 
@@ -849,6 +848,12 @@ def positions(y_arr, pSD, nSD, mean):
 
     return pos
 
+def search_arr(arr, val):
+    ans = False
+    for i in arr:
+        if i == val:
+            ans = True
+    return ans
 
 def Qc_Plot(analyzerName,testName,testCode,qcLotNum,qcName,qcLevel,CalcMeanShow,Duration,GraphRules):
     Results_arr = []
@@ -901,31 +906,27 @@ def Qc_Plot(analyzerName,testName,testCode,qcLotNum,qcName,qcLevel,CalcMeanShow,
         name = '1-3S Rule',
         mode = "markers",
         line={'color': 'red'},
-        hoverinfo='skip', 
         )
     trace_rule_2_2s = go.Scatter(
         x=X_axis, 
         y=rules(Results_arr,pSD,nSD,'2-2S'), 
         name = '2-2S Rule',
         mode = "markers",
-        line={'color': 'grey'},
-        hoverinfo='skip',
+        line={'color': 'lime'},
         )
     trace_rule_4_1s = go.Scatter(
         x=X_axis, 
-        y=rules(Results_arr,pSD,nSD,'4-1S'), 
+        y=rules(Results_arr,pSD,nSD,'4-1S', Assigned_mean), 
         name = '4-1S Rule',
         mode = "markers",
         line={'color': 'yellow'},
-        hoverinfo='skip',  
         )
     trace_rule_xs = go.Scatter(
         x=X_axis, 
         y=rules(Results_arr,pSD,nSD,'xs', Assigned_mean), 
         name = 'xs Rule',
         mode = "markers",
-        line={'color': 'pink'},
-        hoverinfo='skip',  
+        line={'color': 'fuchsia'},
         )
     trace2 = go.Scatter(
         x=X_axis,
@@ -1090,7 +1091,6 @@ def Calculate(n_clicks,CalcMeanShow,GraphRules,testCode,qcLotNum,qcName,qcLevel,
     displayed = False
     Message = ""
     fig_arr = []
-    print(GraphRules)
     # CvTableData=[]
     
     if not (testCode and qcLotNum and qcName and qcLevel and Duration) :
