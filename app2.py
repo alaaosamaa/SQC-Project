@@ -392,6 +392,20 @@ def DrawCalcMeanOption():
     ])
     return DrawCalcMeanOption
 
+Graph_Rules = [
+    dbc.Label('Choose Graph Rule'),
+    dcc.Checklist(
+    id = 'Graph_Rules',
+    options=[
+        {'label': ' 1-2S', 'value': '1-2S'},
+        {'label': ' 1-3S', 'value': '1-3S'},
+        {'label': ' 2-2S', 'value': '2-2S'},
+        {'label': ' 4-1S', 'value': '4-1S'},
+        {'label': ' n-XS', 'value': 'n-XS'},
+    ],
+    value=['1-2S', '1-3S'],
+    labelStyle={'display': 'block'}
+)]
 
 # --------------------------------------------------------------Nav Bar---------------------------------------
 
@@ -504,10 +518,16 @@ app.layout = dbc.Container(
                                 html.Hr(
                                 # style={"margin-top": "-1em"}
                                 ),
-                                dbc.Col(
-                                    DrawCalcMeanOption()
-                                ,md=4, style= {"text-align": "center"}
-                                ),
+                                dbc.Row([
+                                    dbc.Col(
+                                        DrawCalcMeanOption()
+                                    ,md=4, style= {"text-align": "center"}
+                                    ),
+                                    dbc.Col(
+                                        Graph_Rules
+                                    ,md=4, style= {"text-align": "center"}
+                                    ),
+                                ])
                             ],
                             id = 'initial_graph',
                             body=True,
@@ -830,7 +850,7 @@ def positions(y_arr, pSD, nSD, mean):
     return pos
 
 
-def Qc_Plot(analyzerName,testName,testCode,qcLotNum,qcName,qcLevel,CalcMeanShow,Duration):
+def Qc_Plot(analyzerName,testName,testCode,qcLotNum,qcName,qcLevel,CalcMeanShow,Duration,GraphRules):
     Results_arr = []
     Results_arr,Assigned_mean,Assigned_SD,Date_arr = Get_QC_Results_data(testCode,qcLotNum,qcName,qcLevel,Duration)
 
@@ -989,12 +1009,26 @@ def Qc_Plot(analyzerName,testName,testCode,qcLotNum,qcName,qcLevel,CalcMeanShow,
                     color='#32c896', 
                     dash='solid')
     )
-     
-    if CalcMeanShow == "Hide":
-        data = [trace1, trace2, trace3, trace4,trace5, trace6, trace7, trace8, trace_rule_1_2s, trace_rule_1_3s, trace_rule_2_2s, trace_rule_4_1s, trace_rule_xs]
-    elif CalcMeanShow == "Show" :
-        data = [trace1, trace2, trace9, trace3, trace4,trace5, trace6, trace7, trace8, trace_rule_1_2s, trace_rule_1_3s, trace_rule_2_2s, trace_rule_4_1s, trace_rule_xs]
     
+
+    if CalcMeanShow == "Hide":
+        data = [trace1, trace2, trace3, trace4,trace5, trace6, trace7, trace8]
+    elif CalcMeanShow == "Show" :
+        data = [trace1, trace2, trace9, trace3, trace4,trace5, trace6, trace7, trace8]
+    
+    for i in GraphRules:
+        if i == '1-2S':
+            data.append(trace_rule_1_2s)
+        if i == '1-3S':
+            data.append(trace_rule_1_3s)
+        if i == '2-2S':
+            data.append(trace_rule_2_2s)
+        if i == '4-1S':
+            data.append(trace_rule_4_1s)
+        if i == 'n-XS':
+            data.append(trace_rule_xs)
+
+
     layout = go.Layout(
         title = "QC Chart For "+ analyzerName +", Test: "+ testName + ", QC Lot Num: " + str(qcLotNum) +", QC Name: "+ qcName +", QC Level: "+ qcLevel,
         xaxis = dict(
@@ -1040,6 +1074,7 @@ def graph_card(fig,graph_calcs):
             Output('error-message', 'message'),
             Input('Plot_Button', 'n_clicks'),
             Input('Draw_calc_Mean_option0', 'value'),
+            Input('Graph_Rules', 'value'),
             State('myresult_test_memory', 'data'),
             State('myresult_qc_lot_num_memory', 'data'),
             State('QC_Name', 'value'),
@@ -1048,13 +1083,14 @@ def graph_card(fig,graph_calcs):
             State('Analyzer_Name','value'),
             prevent_initial_call = True)
             
-def Calculate(n_clicks,CalcMeanShow,testCode,qcLotNum,qcName,qcLevel,Duration,analyzerName):
+def Calculate(n_clicks,CalcMeanShow,GraphRules,testCode,qcLotNum,qcName,qcLevel,Duration,analyzerName):
     MeanTableData=[]
     MeanTableData = graph_calcs
     QC_Results = []
     displayed = False
     Message = ""
     fig_arr = []
+    print(GraphRules)
     # CvTableData=[]
     
     if not (testCode and qcLotNum and qcName and qcLevel and Duration) :
@@ -1080,7 +1116,7 @@ def Calculate(n_clicks,CalcMeanShow,testCode,qcLotNum,qcName,qcLevel,Duration,an
         if n_clicks > 0 :
             fig_arr = []
             for i in qcLevel:
-                fig, QC_Results,Assigned_mean,Assigned_SD =Qc_Plot(analyzerName,testName,testCode,qcLotNum,qcName,i,CalcMeanShow,Duration)
+                fig, QC_Results,Assigned_mean,Assigned_SD =Qc_Plot(analyzerName,testName,testCode,qcLotNum,qcName,i,CalcMeanShow,Duration,GraphRules)
 
                 if fig == 0 :
                     displayed = True
