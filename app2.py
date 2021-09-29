@@ -762,7 +762,7 @@ def rules(arr,pSD,nSD,rule):
         y_arr.extend(temp)  
 
 
-    
+    print(y_arr)    
     return y_arr    
 
 def Qc_Plot(analyzerName,testName,testCode,qcLotNum,qcName,qcLevel,CalcMeanShow,Duration):
