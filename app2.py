@@ -741,10 +741,18 @@ def rules(arr,pSD,nSD,rule, mean = 0):
                 y = i    
             y_arr.append(y)
     if rule == '2-2S':
+        for i in range(len(arr)):
+            y_arr[i] = NaN
+
+        ind = []
         for i in range(len(arr) -1):
             y = NaN
             if (arr[i] >= pSD[1] and arr[i] < pSD[2] and arr[i+1] >= pSD[1] and arr[i+1] < pSD[2]) or (arr[i] <= nSD[1] and arr[i] > nSD[2] and arr[i+1] <= nSD[1] and arr[i+1] > nSD[2]):
-                y = arr[i]
+                if not ind.index(i):
+                    ind.append(i)
+                ind.append(i+1)                    
+
+
             y_arr.append(y)
     if rule == '4-1S':
         c = 0        
@@ -765,35 +773,60 @@ def rules(arr,pSD,nSD,rule, mean = 0):
         y_arr.extend(temp)  
 
     if rule == 'xs':
+        n = 5
         pos_arr = positions(arr, pSD, nSD, mean)
+        c = 0
+        temp = []
+        max = c
+        print('pos_arr: ', pos_arr)
+        for i in range(len(pos_arr) - 1):
+            y = NaN
+            if pos_arr[i] == pos_arr[i+1]:
+                c += 1
+                y = arr[i]
+            else:
+                max = c
+                c = 0
+                for i in range(len(temp)):
+                    temp[i] = NaN
+            temp.append(y)
 
+            if ((c +1) >= n):
+                print('c: ', c)
+                y_arr.extend(temp)
+                temp = [] 
+            if c < max and max +1 >= n:
+                print('max: ', max)
+                y_arr.append(arr[i])
 
+        for i in range(len(temp)):
+            temp[i] = NaN
+        y_arr.extend(temp)
+        print('xs: ', y_arr)
 
     return y_arr    
 
 def positions(y_arr, pSD, nSD, mean):
     pos = []
-    print('y_arr: ', y_arr)
     for i in y_arr:
-        if i > mean and i < pSD[0]:
+        if i >= mean and i < pSD[0]:
             pos.append(1)
-        elif i > pSD[0] and i < pSD[1]:
+        elif i >= pSD[0] and i < pSD[1]:
             pos.append(2)
-        elif i > pSD[1] and i < pSD[2]:
+        elif i >= pSD[1] and i < pSD[2]:
             pos.append(3)
-        elif i > pSD[2]:
+        elif i >= pSD[2]:
             pos.append(4)
 
         elif i < mean and i > nSD[0]:
             pos.append(-1)
-        elif i < nSD[0] and i > nSD[1]:
+        elif i <= nSD[0] and i > nSD[1]:
             pos.append(-2)
-        elif i < nSD[1] and i > nSD[2]:
+        elif i <= nSD[1] and i > nSD[2]:
             pos.append(-3)
-        elif i < nSD[2]:
+        elif i <= nSD[2]:
             pos.append(-4)
 
-    print('positions array: ', pos)
     return pos
 
 
@@ -855,7 +888,7 @@ def Qc_Plot(analyzerName,testName,testCode,qcLotNum,qcName,qcLevel,CalcMeanShow,
         y=rules(Results_arr,pSD,nSD,'2-2S'), 
         name = '2-2S Rule',
         mode = "markers",
-        line={'color': 'darkorange'},
+        line={'color': 'grey'},
         hoverinfo='skip',
         )
     trace_rule_4_1s = go.Scatter(
