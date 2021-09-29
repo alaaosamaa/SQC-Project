@@ -793,35 +793,23 @@ def rules(arr,pSD,nSD,rule, mean = 0):
 
     if rule == 'xs':
         n = 5
-        pos_arr = positions(arr, pSD, nSD, mean)
         c = 0
-        temp = []
-        max = c
-        # print('pos_arr: ', pos_arr)
+        
         for i in range(len(pos_arr) - 1):
-            y = NaN
+
             if pos_arr[i] == pos_arr[i+1]:
                 c += 1
-                y = arr[i]
+                if (not (search_arr(ind, i))):
+                    ind.append(i)
+                ind.append(i+1)
+
             else:
-                max = c
                 c = 0
-                for i in range(len(temp)):
-                    temp[i] = NaN
-            temp.append(y)
+                ind = []
 
             if ((c +1) >= n):
-                # print('c: ', c)
-                y_arr.extend(temp)
-                temp = [] 
-            if c < max and max +1 >= n:
-                # print('max: ', max)
-                y_arr.append(arr[i])
-
-        for i in range(len(temp)):
-            temp[i] = NaN
-        y_arr.extend(temp)
-        # print('xs: ', y_arr)
+                for i in ind:
+                    y_arr[i] = arr[i]
 
     return y_arr    
 
