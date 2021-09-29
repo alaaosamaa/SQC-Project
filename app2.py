@@ -856,7 +856,7 @@ def Qc_Plot(testCode,qcLotNum,qcName,qcLevel,CalcMeanShow,Duration):
 
         )
     )
-    fig = go.Figure(data = data ,layout = layout)
+    fig = go.Figure(data = data ,layout = layout )
 
     return fig ,Results_arr,Assigned_mean,Assigned_SD
 
