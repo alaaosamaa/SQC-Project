@@ -15,6 +15,7 @@ import dash_table
 from numpy.core.arrayprint import printoptions
 from numpy.core.fromnumeric import size
 from numpy.core.numeric import NaN
+from numpy.lib.function_base import append
 import pandas as pd
 from datetime import datetime as dt
 import plotly.express as px
@@ -727,18 +728,40 @@ def Get_QC_Results_data(testCode, qcLotNum, qcName, qcLevel,Duration):
 
 def rules(arr,pSD,nSD,rule):
     y_arr = []
-    if rule == '2S':
+    if rule == '1-2S':
         for i in arr :
             y = NaN
             if (i >= pSD[1] and i < pSD[2]) or (i <= nSD[1] and i > nSD[2]) :
                 y = i    
             y_arr.append(y)
-    if rule == '3S':
+    if rule == '1-3S':
         for i in arr :
             y = NaN
             if (i >= pSD[2] ) or (i <= nSD[2] ) :
                 y = i    
             y_arr.append(y)
+    if rule == '2-2S':
+        for i in range(len(arr) -1):
+            y = NaN
+            if (arr[i] >= pSD[1] and arr[i] < pSD[2] and arr[i+1] >= pSD[1] and arr[i+1] < pSD[2]) or (arr[i] <= nSD[1] and arr[i] > nSD[2] and arr[i+1] <= nSD[1] and arr[i+1] > nSD[2]):
+                y = arr[i]
+            y_arr.append(y)
+    if rule == '4-1S':
+        c = 0
+        temp = []
+        for i in arr:
+            y = NaN
+            if (i >= pSD[0] and i < pSD[1]) or (i <= nSD[0] and i > nSD[1]):
+                c += 1
+                y = i   
+            temp.append(y)            
+            if c == 4:
+                c = 0
+                y_arr.extend(temp)
+                temp = []
+        y_arr.extend(temp)  
+
+
     
     return y_arr    
 
@@ -767,6 +790,7 @@ def Qc_Plot(analyzerName,testName,testCode,qcLotNum,qcName,qcLevel,CalcMeanShow,
     N_One_SD = [ (nSD[0]) for i in range(len(Results_arr))]
     N_Two_SD = [ (nSD[1]) for i in range(len(Results_arr))]
     N_Three_SD = [ (nSD[2]) for i in range(len(Results_arr))]
+
 
     # df = pd.DataFrame({'x': X_axis, 'y': Results_arr})
 
