@@ -805,7 +805,7 @@ def Qc_Plot(analyzerName,testName,testCode,qcLotNum,qcName,qcLevel,CalcMeanShow,
 
     trace11 = go.Scatter(
         x=X_axis, 
-        y=rules(Results_arr,pSD,nSD,'2S'), 
+        y=rules(Results_arr,pSD,nSD,'1-2S'), 
         # a.any()
         name = '1-2S Rule',
         mode = "markers",
@@ -816,11 +816,35 @@ def Qc_Plot(analyzerName,testName,testCode,qcLotNum,qcName,qcLevel,CalcMeanShow,
         )
     trace22 = go.Scatter(
         x=X_axis, 
-        y=rules(Results_arr,pSD,nSD,'3S'), 
+        y=rules(Results_arr,pSD,nSD,'1-3S'), 
         # a.any()
         name = '1-3S Rule',
         mode = "markers",
         line={'color': 'red'},
+        hoverinfo='skip',
+        # line=dict(
+        #             color='orange', 
+        #             dash='solid')   
+        )
+    trace33 = go.Scatter(
+        x=X_axis, 
+        y=rules(Results_arr,pSD,nSD,'2-2S'), 
+        # a.any()
+        name = '2-2S Rule',
+        mode = "markers",
+        line={'color': 'darkorange'},
+        hoverinfo='skip',
+        # line=dict(
+        #             color='orange', 
+        #             dash='solid')   
+        )
+    trace44 = go.Scatter(
+        x=X_axis, 
+        y=rules(Results_arr,pSD,nSD,'4-1S'), 
+        # a.any()
+        name = '4-1S Rule',
+        mode = "markers",
+        line={'color': 'yellow'},
         hoverinfo='skip',
         # line=dict(
         #             color='orange', 
@@ -910,9 +934,9 @@ def Qc_Plot(analyzerName,testName,testCode,qcLotNum,qcName,qcLevel,CalcMeanShow,
     )
      
     if CalcMeanShow == "Hide":
-        data = [trace1, trace11, trace22, trace2, trace3, trace4,trace5, trace6, trace7, trace8]
+        data = [trace1, trace11, trace22, trace33, trace44, trace2, trace3, trace4,trace5, trace6, trace7, trace8]
     elif CalcMeanShow == "Show" :
-        data = [trace1, trace11, trace22, trace2, trace9, trace3, trace4,trace5, trace6, trace7, trace8]
+        data = [trace1, trace11, trace22, trace33, trace44, trace2, trace9, trace3, trace4,trace5, trace6, trace7, trace8]
     
     layout = go.Layout(
         title = "QC Chart For "+ analyzerName +", Test: "+ testName + ", QC Lot Num: " + str(qcLotNum) +", QC Name: "+ qcName +", QC Level: "+ qcLevel,
