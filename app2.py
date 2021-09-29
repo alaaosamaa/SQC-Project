@@ -14,6 +14,7 @@ from datetime import date
 import dash_table
 from numpy.core.arrayprint import printoptions
 from numpy.core.fromnumeric import size
+from numpy.core.numeric import NaN
 import pandas as pd
 from datetime import datetime as dt
 import plotly.express as px
@@ -126,7 +127,7 @@ Logo = "https://icon-library.com/images/graphs-icon/graphs-icon-4.jpg"
 
 # Computing mean for array of data 
 def Data_Mean(dataArray):
-    return statistics.mean(dataArray)
+    return round(statistics.mean(dataArray),2)
 
 
 # Computing standard deviation for array of data
@@ -145,7 +146,7 @@ def Pooled_SD(dataArray1,dataArray2):
 def Data_CV(dataArray):
     dataArray_Mean = Data_Mean(dataArray)
     dataArray_SD = Data_SD(dataArray)
-    return round((dataArray_SD/dataArray_Mean)*100,1)
+    return round((dataArray_SD/dataArray_Mean)*100,2)
 
 # Calculate Measurments Uncertainty (MU)
 def Data_MU(dataArray):
@@ -724,8 +725,24 @@ def Get_QC_Results_data(testCode, qcLotNum, qcName, qcLevel,Duration):
 
     return Results_arr, assigned_mean, assigned_SD,qc_date
 
+def rules(arr,pSD,nSD,rule):
+    y_arr = []
+    if rule == '2S':
+        for i in arr :
+            y = NaN
+            if (i >= pSD[1] and i < pSD[2]) or (i <= nSD[1] and i > nSD[2]) :
+                y = i    
+            y_arr.append(y)
+    if rule == '3S':
+        for i in arr :
+            y = NaN
+            if (i >= pSD[2] ) or (i <= nSD[2] ) :
+                y = i    
+            y_arr.append(y)
+    
+    return y_arr    
 
-def Qc_Plot(testCode,qcLotNum,qcName,qcLevel,CalcMeanShow,Duration):
+def Qc_Plot(analyzerName,testName,testCode,qcLotNum,qcName,qcLevel,CalcMeanShow,Duration):
     Results_arr = []
     Results_arr,Assigned_mean,Assigned_SD,Date_arr = Get_QC_Results_data(testCode,qcLotNum,qcName,qcLevel,Duration)
 
@@ -736,20 +753,54 @@ def Qc_Plot(testCode,qcLotNum,qcName,qcLevel,CalcMeanShow,Duration):
     Ass_Mean = [ Assigned_mean for i in range(len(Results_arr))]
     calc_Mean = Data_Mean(Results_arr)
     calc_Mean_line = [ calc_Mean for i in range(len(Results_arr))]
-    P_One_SD = [ (Assigned_mean + Assigned_SD) for i in range(len(Results_arr))]
-    P_Two_SD = [ (Assigned_mean + 2*Assigned_SD) for i in range(len(Results_arr))]
-    P_Three_SD = [ (Assigned_mean + 3*Assigned_SD) for i in range(len(Results_arr))]
-    N_One_SD = [ (Assigned_mean - Assigned_SD) for i in range(len(Results_arr))]
-    N_Two_SD = [ (Assigned_mean - 2*Assigned_SD) for i in range(len(Results_arr))]
-    N_Three_SD = [ (Assigned_mean - 3*Assigned_SD) for i in range(len(Results_arr))]
+   
+    pSD = []
+    nSD = []
+    for i in range(1,4):
+        pSD.append(Assigned_mean + i*Assigned_SD)
+    for i in range(1,4):
+        nSD.append(Assigned_mean - i*Assigned_SD)
+
+    P_One_SD = [ (pSD[0]) for i in range(len(Results_arr))]
+    P_Two_SD = [ (pSD[1]) for i in range(len(Results_arr))]
+    P_Three_SD = [ (pSD[2]) for i in range(len(Results_arr))]
+    N_One_SD = [ (nSD[0]) for i in range(len(Results_arr))]
+    N_Two_SD = [ (nSD[1]) for i in range(len(Results_arr))]
+    N_Three_SD = [ (nSD[2]) for i in range(len(Results_arr))]
+
+    # df = pd.DataFrame({'x': X_axis, 'y': Results_arr})
 
     trace1 = go.Scatter(
         x=X_axis, 
-        y=Results_arr,
+        y=Results_arr, 
         name = 'Data',
         line=dict(
-                    color='orange', 
+                    color='#c89696', 
                     dash='solid')   
+        )
+
+    trace11 = go.Scatter(
+        x=X_axis, 
+        y=rules(Results_arr,pSD,nSD,'2S'), 
+        # a.any()
+        name = '1-2S Rule',
+        mode = "markers",
+        line={'color': 'orange'},
+        # line=dict(
+        #             color='orange', 
+        #             dash='solid')   
+        )
+    trace22 = go.Scatter(
+        x=X_axis, 
+        y=rules(Results_arr,pSD,nSD,'3S'), 
+        # a.any()
+        name = '1-3S Rule',
+        mode = "markers",
+        line={'color': 'red'},
+        hoverinfo='skip',
+        # line=dict(
+        #             color='orange', 
+        #             dash='solid')   
         )
     trace2 = go.Scatter(
         x=X_axis,
@@ -828,19 +879,19 @@ def Qc_Plot(testCode,qcLotNum,qcName,qcLevel,CalcMeanShow,Duration):
         y=calc_Mean_line,
         name = 'Calculated Mean',
         mode="lines",  
-        opacity=0.6,
+        opacity=0.9,
         line=dict(width=1.1,  #line styling
-                    color='darkgreen', 
+                    color='#32c896', 
                     dash='solid')
     )
      
     if CalcMeanShow == "Hide":
-        data = [trace1, trace2, trace3, trace4,trace5, trace6, trace7, trace8]
+        data = [trace1, trace11, trace22, trace2, trace3, trace4,trace5, trace6, trace7, trace8]
     elif CalcMeanShow == "Show" :
-        data = [trace1, trace2, trace9, trace3, trace4,trace5, trace6, trace7, trace8]
+        data = [trace1, trace11, trace22, trace2, trace9, trace3, trace4,trace5, trace6, trace7, trace8]
     
     layout = go.Layout(
-        title = "QC Chart "+ qcLevel,
+        title = "QC Chart For "+ analyzerName +", Test: "+ testName + ", QC Lot Num: " + str(qcLotNum) +", QC Name: "+ qcName +", QC Level: "+ qcLevel,
         xaxis = dict(
             showgrid = False,
             zeroline = True,
@@ -889,9 +940,10 @@ def graph_card(fig,graph_calcs):
             State('QC_Name', 'value'),
             State('QC_Level', 'value'), 
             State('myresult_qc_Duration_memory','data'),
+            State('Analyzer_Name','value'),
             prevent_initial_call = True)
             
-def Calculate(n_clicks,CalcMeanShow,testCode,qcLotNum,qcName,qcLevel,Duration):
+def Calculate(n_clicks,CalcMeanShow,testCode,qcLotNum,qcName,qcLevel,Duration,analyzerName):
     MeanTableData=[]
     MeanTableData = graph_calcs
     QC_Results = []
@@ -909,6 +961,8 @@ def Calculate(n_clicks,CalcMeanShow,testCode,qcLotNum,qcName,qcLevel,Duration):
     else :
         for i in testCode:
             t = i[1]
+            testName = i[0]
+
         testCode = t
         qcLotNum = qcLotNum[0]
         # ctx = dash.callback_context
@@ -921,7 +975,7 @@ def Calculate(n_clicks,CalcMeanShow,testCode,qcLotNum,qcName,qcLevel,Duration):
         if n_clicks > 0 :
             fig_arr = []
             for i in qcLevel:
-                fig, QC_Results,Assigned_mean,Assigned_SD =Qc_Plot(testCode,qcLotNum,qcName,i,CalcMeanShow,Duration)
+                fig, QC_Results,Assigned_mean,Assigned_SD =Qc_Plot(analyzerName,testName,testCode,qcLotNum,qcName,i,CalcMeanShow,Duration)
 
                 if fig == 0 :
                     displayed = True
