@@ -1049,6 +1049,8 @@ def update_qc_level_dropdowns(qcname):
             Output('error-message', 'displayed'),
             Output('error-message', 'message'),
             Output('calculated_data_memory', 'data'),
+            Output('rules_container', 'style'),
+
             Input('Plot_Button', 'n_clicks'),
             Input('Draw_calc_Mean_option0', 'value'),
             Input('Graph_Rules', 'value'),
@@ -1060,10 +1062,11 @@ def update_qc_level_dropdowns(qcname):
             State('Analyzer_Name','value'),
             Input('nX-input', 'value'),
             State('myresult_analyzer_memory','data'),
+            Input('Apply_Graph_Rules', 'value'),
 
             prevent_initial_call = True)
             
-def Calculate(plot_n_clicks,CalcMeanShow,GraphRules,testCode,qcLotNum,qcName,qcLevel,Duration,analyzerName,n_Rules,analyzer_data):
+def Calculate(plot_n_clicks,CalcMeanShow,GraphRules,testCode,qcLotNum,qcName,qcLevel,Duration,analyzerName,n_Rules,analyzer_data,Apply_Graph_Rules):
     MeanTableData=[]
     MeanTableData = graph_calcs
     QC_Results = []
@@ -1071,7 +1074,7 @@ def Calculate(plot_n_clicks,CalcMeanShow,GraphRules,testCode,qcLotNum,qcName,qcL
     Message = ""
     fig_arr = []
     calc_data = []
-
+    applyGraphRules = {'display':'none'} 
     # CvTableData=[]
     
     if not (testCode and qcLotNum and qcName and qcLevel and Duration) :
@@ -1107,7 +1110,10 @@ def Calculate(plot_n_clicks,CalcMeanShow,GraphRules,testCode,qcLotNum,qcName,qcL
                     Message = "Data Not Found for " + i
                     # return   html.Tbody(MeanTableData),,displayed ,
                 else :
-                    update_graph_flag()
+                    if Apply_Graph_Rules == 'ON' and fig != 0 :
+                        applyGraphRules = None
+                    else :
+                        applyGraphRules =  {'display':'none'}
                     Calculations_data = Calculate_All(QC_Results)
                     calc_data = Calculations_data
                     Mean_Table_values[0],Mean_Table_values[2], Mean_Table_values[4] = Assigned_mean, Assigned_SD, Assigned_CV
@@ -1117,20 +1123,20 @@ def Calculate(plot_n_clicks,CalcMeanShow,GraphRules,testCode,qcLotNum,qcName,qcL
                     fig_arr.append(graph_card(fig,MeanTableData))
            
     # return html.Tbody(MeanTableData),html.Tbody(CvTableData),fig_arr
-    return  html.Tbody(MeanTableData), fig_arr, displayed, Message, calc_data
+    return  html.Tbody(MeanTableData), fig_arr, displayed, Message, calc_data, applyGraphRules
 
 
-@app.callback(
+# @app.callback(
 
-    Output('rules_container', 'style'),
-    Input('Apply_Graph_Rules', 'value'),
-    prevent_initial_call = True,
-)
-def Apply_Graph_Rules_function(val):
-    if val == 'ON':
-        return 
-    else :
-        return {'display':'none'}
+#     Output('rules_container', 'style'),
+#     Input('Apply_Graph_Rules', 'value'),
+#     prevent_initial_call = True,
+# )
+# def Apply_Graph_Rules_function(val):
+#     if val == 'ON':
+#         return 
+#     else :
+#         return {'display':'none'}
 
 # @app.callback(
 

@@ -52,34 +52,34 @@ QC_Parameter = dbc.Card(
         dbc.FormGroup(
             [
                 # dbc.Label('QC Parameters'),
-                dbc.Col(miniSpace),
-                dcc.Input(
+                dbc.Col(space),
+                dbc.Input(
                     id="qc_id",
                     type="number",
                     placeholder='enter QC ID',
                 ),
-                dbc.Col(miniSpace),
-                dcc.Input(
+                dbc.Col(space),
+                dbc.Input(
                     id="qc_lot_number",
                     type="number",
                     placeholder='enter QC Lot Number',
 
                 ),
-                dbc.Col(miniSpace),
+                dbc.Col(space),
                 dcc.Dropdown(
                     id='qc_name',
                     options=[
                         {'label': name, 'value': name} for name in name],
                     placeholder='Select QC Name'
                 ),
-                dbc.Col(miniSpace),
+                dbc.Col(space),
                 dcc.Dropdown(
                     id='qc_type',
                     options=[
                         {'label': type, 'value': type} for type in Type],
                     placeholder='Select QC Type'
                 ),
-                dbc.Col(miniSpace),
+                dbc.Col(space),
                 dcc.Dropdown(
                     id='qc_level',
                     options=[
@@ -92,7 +92,7 @@ QC_Parameter = dbc.Card(
     ],
     body=True,
     className=cardShadow[0],
-    style=cardShadow[1]
+    # style=cardShadow[1]
 )
 QC_Result = dbc.Card(
     [
@@ -100,67 +100,67 @@ QC_Result = dbc.Card(
             [
                 dbc.Row([
                     dbc.Col([
-                        dbc.Col(miniSpace),
-                        dcc.Input(
+                        dbc.Col(space),
+                        dbc.Input(
                             id="test_code",
                             type="number",
                             placeholder='Enter QC Test Code',
                         ),
-                        dbc.Col(miniSpace),
-                        dcc.Input(
+                        dbc.Col(space),
+                        dbc.Input(
                             id="analyzer code",
                             type="number",
                             placeholder='Enter Analyzer Code',
 
                         ),
-                        dbc.Col(miniSpace),
-                        dcc.Input(
+                        dbc.Col(space),
+                        dbc.Input(
                             id="reagent_lot_number",
                             type="number",
                             placeholder='Enter Reagent Lot Number',
 
                         ),
-                        dbc.Col(miniSpace),
-                        dcc.Input(
+                        dbc.Col(space),
+                        dbc.Input(
                             id="qc_id_test",
                             type="number",
                             placeholder='Enter QC ID',
                         ),
-                        dbc.Col(miniSpace),
-                        dcc.Input(
+                        dbc.Col(space),
+                        dbc.Input(
                             id="qc_assigned_mean",
                             type="number",
                             placeholder='Enter Assigned Mean',
                         ),
-                        dbc.Col(miniSpace),
-                        dcc.Input(
+                        dbc.Col(space),
+                        dbc.Input(
                             id="qc_assigned_sd",
                             type="number",
                             placeholder='Enter Assigned SD',
                         ),
-                    ], md=5),
+                    ], md=6),
                     dbc.Col([
 
-                            dbc.Col(miniSpace),
-                            dcc.Input(
+                            dbc.Col(space),
+                            dbc.Input(
                                 id="qc_assigned_cv",
                                 type="number",
                                 placeholder='Enter Assigned CV',
                             ),
-                            dbc.Col(miniSpace),
-                            dcc.Input(
+                            dbc.Col(space),
+                            dbc.Input(
                                 id="qc_qualitative_assigned",
                                 type="number",
                                 placeholder='Enter Qualitative Assigned',
                             ),
-                            dbc.Col(miniSpace),
-                            dcc.Input(
+                            dbc.Col(space),
+                            dbc.Input(
                                 id="qc_result",
                                 type="number",
                                 placeholder='Enter QC Result',
                             ),
-                            dbc.Col(miniSpace),
-                            dcc.Input(
+                            dbc.Col(space),
+                            dbc.Input(
                                 id="qc_flag",
                                 type="number",
                                 placeholder='Enter QC Flag 1 or 0',
@@ -169,29 +169,29 @@ QC_Result = dbc.Card(
                             ),
 
                             # html.Div(id='output-container-date-picker-single'),
-                            dbc.Col(miniSpace),
-                            dcc.Input(
+                            dbc.Col(space),
+                            dbc.Input(
                                 id="qc_calculated_mean",
                                 type="number",
                                 placeholder='Enter Calculated Mean',
                             ),
-                            dbc.Col(miniSpace),
-                            dcc.Input(
+                            dbc.Col(space),
+                            dbc.Input(
                                 id="qc_calculated_sd",
                                 type="number",
                                 placeholder='Enter Calculated SD',
                             ),
-                            dbc.Col(miniSpace),
-                            dcc.Input(
+                            dbc.Col(space),
+                            dbc.Input(
                                 id="qc_calculated_cv",
                                 type="number",
                                 placeholder='Enter Calculated CV',
                             ),
-                            ], md=5),
-                    dbc.Col(md=2),
+                            ], md=6),
+                    # dbc.Col(md=2),
                     dbc.Col([
                         
-                            dbc.Col(miniSpace),
+                            dbc.Col(space),
                             dcc.DatePickerSingle(
                                 id='my-date-picker-single',
                                 # min_date_allowed=date(1995, 8, 5),
@@ -203,7 +203,7 @@ QC_Result = dbc.Card(
 
                             ),
 
-                            dbc.Col(miniSpace),
+                            dbc.Col(space),
                             dcc.Dropdown(
                                 id='qc_overall_status',
                                 options=[
@@ -222,7 +222,7 @@ QC_Result = dbc.Card(
     ],
     body=True,
     className=cardShadow[0],
-    style=cardShadow[1]
+    # style=cardShadow[1]
 )
 QC_Parameters = dbc.Container([QC_Parameter])
 Test_QC_Results = dbc.Container([QC_Result])
@@ -257,6 +257,7 @@ QC_PARAMETER = html.Div(
         dbc.Modal(
             [
                 dbc.ModalHeader("QC Parameters"),
+                # dbc.Col(space),
                 dbc.ModalBody(QC_Parameters),
                 dbc.ModalFooter(
                     dbc.Button(
@@ -403,6 +404,8 @@ def toggle_navbar_collapse(n, is_open):
               Input('url', 'pathname'))
 def display_page(pathname):
 
+    if pathname == '/':
+        return app2.layout
     if pathname == '/apps/app2':
         return app2.layout
     elif pathname == '/apps/report':
