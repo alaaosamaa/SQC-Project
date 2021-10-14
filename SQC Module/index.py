@@ -19,6 +19,8 @@ space = dbc.Row("  ", style={"height": "10px"})
 
 # Mini space
 miniSpace = dbc.Row("  ", style={"height": "3px"})
+
+# Database object
 mydb = mysql.connector.connect(
     host="localhost",
     user="root",
@@ -33,6 +35,8 @@ name = np.unique(QC_df.qc_name)
 Type = sorted(np.unique(QC_df.qc_type))
 Level = np.unique(QC_df.qc_level)
 Status = ['PENDING', 'COMPLETE', 'FAILED']
+
+
 # make a reuseable navitem for the different examples
 nav_item = dbc.NavItem(dbc.NavLink(
     'Home', href="/apps/app2", style={"color": "#caccce"},))
