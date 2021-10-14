@@ -12,5 +12,5 @@ python database.py
 ```
 5. Run app: 
 ```
-python app2.py
+python index.py
 ```
