@@ -1054,19 +1054,20 @@ def update_qc_level_dropdowns(qcname):
             Input('Plot_Button', 'n_clicks'),
             Input('Draw_calc_Mean_option0', 'value'),
             Input('Graph_Rules', 'value'),
+            Input('nX-input', 'value'),
+            Input('Apply_Graph_Rules', 'value'),
+
             State('myresult_test_memory', 'data'),
             State('myresult_qc_lot_num_memory', 'data'),
             State('QC_Name', 'value'),
             State('QC_Level', 'value'), 
             State('myresult_qc_Duration_memory','data'),
             State('Analyzer_Name','value'),
-            Input('nX-input', 'value'),
             State('myresult_analyzer_memory','data'),
-            Input('Apply_Graph_Rules', 'value'),
 
             prevent_initial_call = True)
             
-def Calculate(plot_n_clicks,CalcMeanShow,GraphRules,testCode,qcLotNum,qcName,qcLevel,Duration,analyzerName,n_Rules,analyzer_data,Apply_Graph_Rules):
+def Calculate(plot_n_clicks,CalcMeanShow,GraphRules,n_Rules,Apply_Graph_Rules,testCode,qcLotNum,qcName,qcLevel,Duration,analyzerName,analyzer_data):
     MeanTableData=[]
     MeanTableData = graph_calcs
     QC_Results = []
